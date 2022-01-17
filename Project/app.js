@@ -55,6 +55,9 @@ function updateCurrentAudio(){
             event.preventDefault()
             if (event.button == 2){
                 updateAudioName(i-1); 
+                if (!fileIsEmpty(i-1)){
+                    visualizeAudio(i-1); 
+                }
             }
         }); 
     }
@@ -75,4 +78,32 @@ function updateAudioName(pad){
     else{
         audioLabel.innerHTML = "Pad " + (pad+1) + ": " + file.files[0].name; 
     }
+}
+
+async function getAudioBuffer(pad){
+    const file = document.getElementById("file-input"+(pad+1)); 
+    const url = URL.createObjectURL(file.files[0]); 
+    const response = await(fetch(url)); 
+    const arrayBuffer = await(response.arrayBuffer()); 
+    const audioBuffer = await(audioContext.decodeAudioData(arrayBuffer)); 
+    return audioBuffer; 
+}
+
+function visualizeAudio(pad){
+    const rawData = getAudioBuffer(pad).getChannelData(0); 
+    const samples = 70; 
+    const blockSize = Math.floor(rawData.length / samples);
+    const filteredData = [];
+
+    for (let i = 0; i < samples; i++){
+        let sum = 0; 
+        for (let j = 0; j < blockSize; j++){
+            sum += Math.abs(rawData[j+i*samples]); 
+        }
+        filteredData[i] = sum/blockSize; 
+    }
+
+
+
+
 }
