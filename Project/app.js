@@ -51,6 +51,7 @@ function updateFile(){
 function updateCurrentAudio(){
     for (let i = 1; i <= 16; i++){
         const key = document.getElementById("pad-"+i); 
+        const file = document.getElementById("file-input"+i); 
         key.addEventListener("contextmenu", function (event) {
             event.preventDefault()
             if (event.button == 2){
@@ -60,8 +61,11 @@ function updateCurrentAudio(){
                 }
             }
         }); 
+        file.addEventListener("change", function(){
+            updateAudioName(i-1); 
+        })
+        
     }
-
 }
 
 function fileIsEmpty(pad){
@@ -86,14 +90,15 @@ async function getAudioBuffer(pad){
     const response = await(fetch(url)); 
     const arrayBuffer = await(response.arrayBuffer()); 
     const audioBuffer = await(audioContext.decodeAudioData(arrayBuffer)); 
-    return audioBuffer; 
+    return audioBuffer.getChannelData(0); 
 }
 
 function visualizeAudio(pad){
-    const rawData = getAudioBuffer(pad).getChannelData(0); 
+    const rawData = getAudioBuffer(pad); 
     const samples = 70; 
     const blockSize = Math.floor(rawData.length / samples);
-    const filteredData = [];
+    let filteredData = [];
+    let max = 0; 
 
     for (let i = 0; i < samples; i++){
         let sum = 0; 
@@ -101,9 +106,11 @@ function visualizeAudio(pad){
             sum += Math.abs(rawData[j+i*samples]); 
         }
         filteredData[i] = sum/blockSize; 
+        max = Math.max(filteredData[i], max); 
     }
 
-
+    const multiplyer = Math.pow(max, -1); 
+    filteredData = filteredData.map(i => i * multiplyer); 
 
 
 }
