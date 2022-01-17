@@ -14,6 +14,9 @@ for (let i = 0; i < 16; i++){
     source.connect(primaryGainCtrol); 
 }
 
+const masterGainInput = document.getElementById("masterGainInput"); 
+
+
 updateFile(); 
 keyPress(); 
 
