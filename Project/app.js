@@ -1,12 +1,15 @@
 console.clear(); 
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext);
-
 const primaryGainCtrol = audioContext.createGain(); 
+const audios = []; 
+const samples = 100; 
+const audioVizualizationCanvas = document.getElementById("audioVizualization");
+const canvasContext = audioVizualizationCanvas.getContext("2d"); 
+
 primaryGainCtrol.gain.setValueAtTime(1, audioContext.currentTime); 
 primaryGainCtrol.connect(audioContext.destination); 
 
-const audios = []; 
 
 for (let i = 0; i < 16; i++){
     audios[i] = new Audio(); 
@@ -14,10 +17,8 @@ for (let i = 0; i < 16; i++){
     source.connect(primaryGainCtrol); 
 } 
 
-const audioVizualizationCanvas = document.getElementById("audioVizualization");
 let heightRatio = 0.2;
 audioVizualizationCanvas.height = audioVizualizationCanvas.width * heightRatio;
-const canvasContext = audioVizualizationCanvas.getContext("2d"); 
 canvasContext.translate(0, audioVizualizationCanvas.height/2); // Set Y = 0 to be in the middle of the canvas
 canvasContext.fillStyle = "rgb(92, 92, 91)";
 
@@ -102,8 +103,8 @@ async function getAudioBuffer(pad){
 }
 
 async function getData(pad){
+    console.log('a'); 
     const rawData = await(getAudioBuffer(pad)); 
-    const samples = 70; 
     const blockSize = Math.floor(rawData.length / samples);
     let filteredData = [];
     let max = 0; 
@@ -113,23 +114,21 @@ async function getData(pad){
         for (let j = 0; j < blockSize; j++){
             sum += Math.abs(rawData[j+i*samples]); 
         }
-        console.log(sum); 
         filteredData.push(sum/blockSize); 
         max = Math.max(filteredData[i], max); 
     }
 
+
     const multiplyer = Math.pow(max, -1); 
     filteredData = filteredData.map(i => i * multiplyer); 
+    filteredData = filteredData.map(i => i * (audioVizualizationCanvas.height * 0.7))
+    console.log(filteredData, audioVizualizationCanvas.height); 
     return filteredData; 
 
 }
 
-function visualizeAudio(pad){
-    // const filteredData = getData(pad); 
-
-    // for (let i = 0; i < filteredData.length; i++){
-    //     canvasContext.fillRect(i*2, 10*filteredData, 10, 20*filteredData)
-    // }
-
+async function visualizeAudio(pad){
+    const filteredData = await(getData(pad)); 
+    console.log(filteredData); 
 }
 
