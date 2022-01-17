@@ -23,7 +23,8 @@ body {
     margin-left: 0.1vw;
     background-color:rgb(148, 148, 148);  
     border-radius: 5%;
-    box-shadow: 2px 2px rgb(233, 217, 197);
+    /* box-shadow: 2px 2px rgb(233, 217, 197); */
+    box-shadow: 3px 3px rgb(182, 182, 182);
 }
 
 .sections{
