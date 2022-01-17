@@ -16,7 +16,7 @@ for (let i = 0; i < 16; i++){
 
 const masterGainInput = document.getElementById("masterGainInput"); 
 
-
+updateCurrentAudio(); 
 updateFile(); 
 keyPress(); 
 
@@ -48,3 +48,31 @@ function updateFile(){
     }
 }
 
+function updateCurrentAudio(){
+    for (let i = 1; i <= 16; i++){
+        const key = document.getElementById("pad-"+i); 
+        key.addEventListener("contextmenu", function (event) {
+            event.preventDefault()
+            if (event.button == 2){
+                updateAudioName(i-1); 
+            }
+        }); 
+    }
+
+}
+
+function fileIsEmpty(pad){
+    const file = document.getElementById("file-input" + (pad+1)); 
+    return file.files[0] == undefined; 
+}
+
+function updateAudioName(pad){
+    const audioLabel = document.getElementById("audioLabel"); 
+    const file = document.getElementById("file-input"+(pad+1)); 
+    if (fileIsEmpty(pad)){
+        audioLabel.innerHTML = "Pad " + (pad+1) + ": Untitled"; 
+    }
+    else{
+        audioLabel.innerHTML = "Pad " + (pad+1) + ": " + file.files[0].name; 
+    }
+}
