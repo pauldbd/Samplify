@@ -43,6 +43,5 @@ function updateFile(){
             audios[i].src = URL.createObjectURL(file.files[0]); 
         })
     }
-    
 }
 
