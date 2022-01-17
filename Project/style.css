@@ -1,6 +1,8 @@
 body {
     font-family:"Gill Sans", sans-serif;
-    background-color:rgb(207, 182, 157); 
+    /* background-color:rgb(207, 182, 157);  */
+    background-color:rgb(228, 220, 208); 
+    color: rgb(92, 92, 91);
     letter-spacing: 4px;
     margin:0; 
     /* text-shadow: 2px 2px rgb(238, 211, 180); */
@@ -19,7 +21,7 @@ body {
     position: relative; 
     margin-top: 0.1vw;
     margin-left: 0.1vw;
-    background-color:rgb(146, 120, 101);  
+    background-color:rgb(148, 148, 148);  
     border-radius: 5%;
     box-shadow: 2px 2px rgb(233, 217, 197);
 }
