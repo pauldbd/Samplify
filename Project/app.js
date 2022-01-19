@@ -21,8 +21,7 @@ audioVizualizationCanvas.width = audioVizualizationCanvas.offsetWidth * dpr;
 audioVizualizationCanvas.height = audioVizualizationCanvas.width * 0.12; 
 
 const canvasContext = audioVizualizationCanvas.getContext("2d"); 
-canvasContext.scale(dpr, dpr);
-canvasContext.translate(0, audioVizualizationCanvas.offsetHeight / 2 + padding); // Set Y = 0 to be in the middle of the audioVizualizationCanvas
+canvasContext.translate(0, audioVizualizationCanvas.height / 2 + padding); // Set Y = 0 to be in the middle of the audioVizualizationCanvas
 canvasContext.fillStyle = "rgb(92, 92, 91)";
 let samples = audioVizualizationCanvas.width; 
 
@@ -57,7 +56,7 @@ function updateFile(){
     for (let i = 0; i < 16; i++){
         const file = document.getElementById("file-input"+(i+1)); 
         file.addEventListener("input", function (event){
-            audios[i].src = URL.createObjectURL(file.files[0]); 
+            if (!fileIsEmpty(i)) audios[i].src = URL.createObjectURL(file.files[0]); 
         })
     }
 }
@@ -69,7 +68,7 @@ function updateCurrentAudio(){
         key.addEventListener("contextmenu", function (event) {
             event.preventDefault()
             if (event.button == 2){
-                updateAudioName(i-1); 
+                updateAudioName(i-1);
                 if (!fileIsEmpty(i-1)){
                     visualizeAudio(i-1); 
                 }
@@ -105,11 +104,13 @@ function updateAudioName(pad){
 
 async function getAudioBuffer(pad, ChannelData){
     const file = document.getElementById("file-input"+(pad+1)); 
-    const url = URL.createObjectURL(file.files[0]); 
+    const url = URL.createObjectURL(file.files[0]);
     const response = await(fetch(url)); 
     const arrayBuffer = await(response.arrayBuffer()); 
     const audioBuffer = await(audioContext.decodeAudioData(arrayBuffer)); 
-    return audioBuffer.getChannelData(ChannelData); 
+    let data = audioBuffer.getChannelData(ChannelData); 
+    // data = data.slice(125331); 
+    return data; 
 }
 
 async function getData(pad, ChannelData){
@@ -121,7 +122,7 @@ async function getData(pad, ChannelData){
     for (let i = 0; i < samples; i++){
         let sum = 0; 
         for (let j = 0; j < blockSize; j++){
-            if (!isNaN(Math.abs(rawData[j+i*samples])))
+            if (!isNaN(Math.abs(rawData[j+i*blockSize])))
             sum += Math.abs(rawData[j+i*blockSize]); 
         }
         filteredData.push(sum/blockSize)
@@ -132,6 +133,7 @@ async function getData(pad, ChannelData){
     const multiplyer = Math.pow(max, -1); 
     filteredData = filteredData.map(i => i * multiplyer); 
     filteredData = filteredData.map(i => i * (audioVizualizationCanvas.height * 0.5))
+    console.log(filteredData.length); 
     return filteredData; 
 
 }
@@ -149,6 +151,7 @@ async function visualizeAudio(pad){
     for (let i = 0; i < samples; i++){
         canvasContext.fillRect(i, 0, 1, Math.round(filteredData[i]/2))
     }
+ 
 
     filteredData = await(getData(pad,1));
     let i = 0; 
