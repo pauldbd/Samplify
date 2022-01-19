@@ -50,7 +50,7 @@ body {
 #pad-1{
 
     margin-left:8vw; 
-    margin-top: 11vh; 
+    margin-top: 3vh; 
 }
 
 #pad-5{
@@ -99,7 +99,7 @@ body {
 
 .audioName {
     position: relative; 
-    margin-top: 3vw; 
+    margin-top: 2vw; 
     font-size: 1.7vw;
     /* margin-left:20%;  */
     text-align: center;
@@ -110,11 +110,11 @@ body {
     border: 2px solid; 
     border-radius: 2%;
     align-content: flex-start;
-    width: 80%;
+    width: 70%;
 }
 
 .visualizeAudio{
-    /* width: 100%; */
+    width: 100%;
     /* min-height: 100vh; */
     display: flex;
     justify-content: center;

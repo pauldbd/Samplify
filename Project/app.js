@@ -3,8 +3,6 @@ console.clear();
 const audioContext = new (window.AudioContext || window.webkitAudioContext);
 const primaryGainCtrol = audioContext.createGain(); 
 const audioVizualizationCanvas = document.getElementById("audioVizualization");
-const canvasContext = audioVizualizationCanvas.getContext("2d"); 
-const samples = 300;  
 primaryGainCtrol.connect(audioContext.destination); 
 
 
@@ -15,16 +13,24 @@ for (let i = 0; i < 16; i++){
     source.connect(primaryGainCtrol); 
 } 
 
-let heightRatio = 0.2;
-audioVizualizationCanvas.height = audioVizualizationCanvas.width * heightRatio;
-canvasContext.translate(0, audioVizualizationCanvas.height/2); // Set Y = 0 to be in the middle of the canvas
+let heightRatio = 0.15;
+const dpr = window.devicePixelRatio || 1;
+const padding = 0;
+audioVizualizationCanvas.width = audioVizualizationCanvas.offsetWidth * dpr;
+// audioVizualizationCanvas.height = (audioVizualizationCanvas.offsetHeight + padding * 2) * dpr;
+audioVizualizationCanvas.height = audioVizualizationCanvas.width * 0.12; 
+
+const canvasContext = audioVizualizationCanvas.getContext("2d"); 
+canvasContext.scale(dpr, dpr);
+canvasContext.translate(0, audioVizualizationCanvas.offsetHeight / 2 + padding); // Set Y = 0 to be in the middle of the audioVizualizationCanvas
 canvasContext.fillStyle = "rgb(92, 92, 91)";
+let samples = audioVizualizationCanvas.width; 
 
 updateCurrentAudio(); 
 updateFile(); 
 keyPress(); 
 
-function keyPress(){
+async function keyPress(){
     window.addEventListener("keydown", async (event) => {
 
         const keys = "asdfghjklzxcvbnm";
@@ -35,6 +41,10 @@ function keyPress(){
                 if (file != null){
                     audios[i].currentTime = 0; 
                     audios[i].play();
+                    // const length = (await getData(i, 0)).length; 
+                    // setInterval(() => {
+                    //     while (audioContext[i].currentTime < ) 
+                    // }, 10)
 
                 }
 
@@ -63,6 +73,7 @@ function updateCurrentAudio(){
                 if (!fileIsEmpty(i-1)){
                     visualizeAudio(i-1); 
                 }
+                else clearCanvas(); 
             }
         }); 
         file.addEventListener("change", function(){
@@ -70,6 +81,7 @@ function updateCurrentAudio(){
             if (!fileIsEmpty(i-1)){
                 visualizeAudio(i-1); 
             }
+            else clearCanvas(); 
         })
         
     }
@@ -102,7 +114,7 @@ async function getAudioBuffer(pad, ChannelData){
 
 async function getData(pad, ChannelData){
     const rawData = await(getAudioBuffer(pad, ChannelData)); 
-    const blockSize = await(Math.floor(rawData.length / samples));
+    const blockSize = Math.floor(rawData.length / samples);
     let filteredData = [];
     let max = 0; 
 
@@ -116,27 +128,33 @@ async function getData(pad, ChannelData){
         max = Math.max(max, filteredData[i]); 
     }
 
-
     const multiplyer = Math.pow(max, -1); 
     filteredData = filteredData.map(i => i * multiplyer); 
-    filteredData = filteredData.map(i => i * (audioVizualizationCanvas.height * 0.7))
+    filteredData = filteredData.map(i => i * (audioVizualizationCanvas.height * 0.5))
     return filteredData; 
 
 }
 
-async function visualizeAudio(pad){
+function clearCanvas(){
     canvasContext.clearRect(0, -audioVizualizationCanvas.height, audioVizualizationCanvas.width, 2 * audioVizualizationCanvas.height);
+}
+
+async function visualizeAudio(pad){
+    clearCanvas(); 
     let filteredData = await(getData(pad, 0)); 
 
     canvasContext.fillRect(0, 0, audioVizualizationCanvas.width, 1); 
-    for (let i = 0; i < samples; i++){
-        canvasContext.fillRect(i+1, 0, 1, Math.round(filteredData[i]/2))
+    for (let i = 0; i < filteredData.length; i++){
+        canvasContext.fillRect(i, 0, 1, Math.round(filteredData[i]/2))
     }
 
     filteredData = await(getData(pad,1));
-
-    for (let i = 0; i < samples; i++){
-        canvasContext.fillRect(i+1, -Math.round(filteredData[i]/2), 1, Math.round(filteredData[i]/2))
+    let i = 0; 
+    for (i = 0; i < filteredData.length; i++){
+        canvasContext.fillRect(i, -Math.round(filteredData[i]/2), 1, Math.round(filteredData[i]/2))
     }
+    console.log(i); 
+    // canvasContext.fillStyle = "red"; 
+    // canvasContext.fillRect(i-1, 0, 1, 50); 
 }
 
