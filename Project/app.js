@@ -132,7 +132,7 @@ async function getData(pad, ChannelData){
 
     const multiplyer = Math.pow(max, -1); 
     filteredData = filteredData.map(i => i * multiplyer); 
-    filteredData = filteredData.map(i => i * (audioVizualizationCanvas.height * 0.5))
+    filteredData = filteredData.map(i => i * (audioVizualizationCanvas.height * 0.8))
     console.log(filteredData.length); 
     return filteredData; 
 
@@ -140,14 +140,12 @@ async function getData(pad, ChannelData){
 
 function clearCanvas(){
     canvasContext.clearRect(0, -audioVizualizationCanvas.height, audioVizualizationCanvas.width, 2 * audioVizualizationCanvas.height);
-    canvasContext.fillRect(0, 0, audioVizualizationCanvas.width, 1); 
+    canvasContext.fillRect(0, 0, audioVizualizationCanvas.width, dpr); 
 }
 
 async function visualizeAudio(pad){
     clearCanvas(); 
     let filteredData = await(getData(pad, 0)); 
-
-    canvasContext.fillRect(0, 0, audioVizualizationCanvas.width, 1); 
     for (let i = 0; i < samples; i++){
         canvasContext.fillRect(i, 0, 1, Math.round(filteredData[i]/2))
     }
