@@ -122,11 +122,12 @@ async function getData(pad, ChannelData){
         let sum = 0; 
         for (let j = 0; j < blockSize; j++){
             if (!isNaN(Math.abs(rawData[j+i*samples])))
-            sum += Math.abs(rawData[j+i*samples]); 
+            sum += Math.abs(rawData[j+i*blockSize]); 
         }
         filteredData.push(sum/blockSize)
-        max = Math.max(max, filteredData[i]); 
+        max = Math.max(filteredData[i], max); 
     }
+
 
     const multiplyer = Math.pow(max, -1); 
     filteredData = filteredData.map(i => i * multiplyer); 
@@ -137,6 +138,7 @@ async function getData(pad, ChannelData){
 
 function clearCanvas(){
     canvasContext.clearRect(0, -audioVizualizationCanvas.height, audioVizualizationCanvas.width, 2 * audioVizualizationCanvas.height);
+    canvasContext.fillRect(0, 0, audioVizualizationCanvas.width, 1); 
 }
 
 async function visualizeAudio(pad){
@@ -144,17 +146,14 @@ async function visualizeAudio(pad){
     let filteredData = await(getData(pad, 0)); 
 
     canvasContext.fillRect(0, 0, audioVizualizationCanvas.width, 1); 
-    for (let i = 0; i < filteredData.length; i++){
+    for (let i = 0; i < samples; i++){
         canvasContext.fillRect(i, 0, 1, Math.round(filteredData[i]/2))
     }
 
     filteredData = await(getData(pad,1));
     let i = 0; 
-    for (i = 0; i < filteredData.length; i++){
+    for (i = 0; i < samples; i++){
         canvasContext.fillRect(i, -Math.round(filteredData[i]/2), 1, Math.round(filteredData[i]/2))
     }
-    console.log(i); 
-    // canvasContext.fillStyle = "red"; 
-    // canvasContext.fillRect(i-1, 0, 1, 50); 
 }
 
