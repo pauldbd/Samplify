@@ -11,7 +11,14 @@ for (let i = 0; i < 16; i++){
     audios[i] = new Audio(); 
     const source = audioContext.createMediaElementSource(audios[i]); 
     source.connect(primaryGainCtrol); 
-} 
+}
+
+let pointerX = null, pointerY = null; 
+
+document.onmousemove = function(event) {
+	pointerX = event.pageX;
+	pointerY = event.pageY;
+}
 
 let heightRatio = 0.15;
 const dpr = window.devicePixelRatio || 1;
@@ -23,10 +30,13 @@ audioVizualizationCanvas.height = audioVizualizationCanvas.width * 0.12;
 const canvasContext = audioVizualizationCanvas.getContext("2d"); 
 canvasContext.translate(0, audioVizualizationCanvas.height / 2 + padding); // Set Y = 0 to be in the middle of the audioVizualizationCanvas
 canvasContext.fillStyle = "rgb(92, 92, 91)";
-let samples = audioVizualizationCanvas.width; 
+let samples = audioVizualizationCanvas.width - 20; 
 
+
+clearCanvas(); 
 updateCurrentAudio(); 
 updateFile(); 
+knobUpdate(); 
 keyPress(); 
 
 async function keyPress(){
@@ -40,7 +50,7 @@ async function keyPress(){
                 if (file != null){
                     audios[i].currentTime = 0; 
                     audios[i].play();
-                    // const length = (await getData(i, 0)).length; 
+                    const length = (await getData(i, 0)).length; 
                     // setInterval(() => {
                     //     while (audioContext[i].currentTime < ) 
                     // }, 10)
@@ -158,3 +168,27 @@ async function visualizeAudio(pad){
     }
 }
 
+function knobUpdate(){
+    const knob = document.getElementById("knob"); 
+    let mouseInterval = null; 
+    holding = false; 
+    let origY = null; 
+    let  knobValue = null;
+    knob.addEventListener("mousedown", function (event){
+        holding = true; 
+        origY = pointerY; 
+        mousetInterval = setInterval(() => {
+            if (holding){
+                knob.style.transform = "rotate(" + ((origY - pointerY)%360) + "deg)"; 
+                knobValue = (origY - pointerY)%360; 
+            }
+        }, 10); 
+    })
+
+    document.addEventListener("mouseup", function (event) {
+        clearInterval(mouseInterval); 
+        holding = false; 
+    })
+
+
+}

@@ -95,7 +95,7 @@ function keyPress(){
                                 audio.pause();
                                 audio.currentTime = 0; 
                                     }
-                                },10);
+                                },10); 
                     }
                     
                 }
