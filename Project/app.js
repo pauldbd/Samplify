@@ -5,15 +5,22 @@ const primaryGainCtrol = audioContext.createGain();
 const audioVizualizationCanvas = document.getElementById("audioVizualization");
 primaryGainCtrol.connect(audioContext.destination); 
 
+let currentEffect = 0;
+let currentEffectLabel = ["Master Gain", "Track Gain"];
+let trackGains = []; 
+let currentPad = 0; 
+
 
 const audios = []; 
 for (let i = 0; i < 16; i++){
     audios[i] = new Audio(); 
+    trackGains[i] = audioContext.createGain(); 
     const source = audioContext.createMediaElementSource(audios[i]); 
-    source.connect(primaryGainCtrol); 
+    source.connect(trackGains[i]); 
+    trackGains[i].connect(primaryGainCtrol); 
 }
 
-let pointerX = null, pointerY = null; 
+let pointerX = null, pointerY = null, knobValue = 0; 
 
 document.onmousemove = function(event) {
 	pointerX = event.pageX;
@@ -59,7 +66,27 @@ async function keyPress(){
 
             }
         }
+
+        updateEffectLabel(event); 
+
+
+
     })
+}
+
+function updateEffectLabel(e){
+    if (e.keyCode == '37') {
+        currentEffect -= 1; 
+    }
+    if (e.keyCode == '39') {
+        currentEffect += 1; 
+    }
+
+    currentEffect += currentEffectLabel.length; 
+    currentEffect %= currentEffectLabel.length; 
+    const label = document.getElementById("effectsLabel"); 
+    label.innerHTML = currentEffectLabel[currentEffect]; 
+
 }
 
 function updateFile(){
@@ -78,6 +105,7 @@ function updateCurrentAudio(){
         key.addEventListener("contextmenu", function (event) {
             event.preventDefault()
             if (event.button == 2){
+                currentPad = i-1; 
                 updateAudioName(i-1);
                 if (!fileIsEmpty(i-1)){
                     visualizeAudio(i-1); 
@@ -105,7 +133,7 @@ function updateAudioName(pad){
     const audioLabel = document.getElementById("audioLabel"); 
     const file = document.getElementById("file-input"+(pad+1)); 
     if (fileIsEmpty(pad)){
-        audioLabel.innerHTML = "Pad " + (pad+1) + ": Untitled"; 
+        audioLabel.innerHTML = "Pad " + (pad+1) + ": Untitled - Click On a Pad To Add a File"; 
     }
     else{
         audioLabel.innerHTML = "Pad " + (pad+1) + ": " + file.files[0].name; 
@@ -172,15 +200,16 @@ function knobUpdate(){
     const knob = document.getElementById("knob"); 
     let mouseInterval = null; 
     holding = false; 
-    let origY = null; 
-    let  knobValue = null;
+    let prev = null;
     knob.addEventListener("mousedown", function (event){
         holding = true; 
-        origY = pointerY; 
+        prev = pointerY; 
         mousetInterval = setInterval(() => {
             if (holding){
-                knob.style.transform = "rotate(" + ((origY - pointerY)%360) + "deg)"; 
-                knobValue = (origY - pointerY)%360; 
+                knobValue += (prev - pointerY); 
+                knob.style.transform = "rotate(" + knobValue%361 + "deg)"; 
+                updateEffects(prev - pointerY); 
+                prev = pointerY; 
             }
         }, 10); 
     })
@@ -190,5 +219,18 @@ function knobUpdate(){
         holding = false; 
     })
 
+
+}
+
+function updateEffects(change){
+    switch (currentEffect){
+        case 0: 
+            primaryGainCtrol.gain.value = Math.max(0, primaryGainCtrol.gain.value + change/100); 
+            break; 
+        case 1: 
+             
+            break; 
+
+    }
 
 }
