@@ -228,7 +228,7 @@ function updateEffects(change){
             primaryGainCtrol.gain.value = Math.max(0, primaryGainCtrol.gain.value + change/100); 
             break; 
         case 1: 
-             
+            trackGains[currentPad].gain.value = Math.max(0, trackGains[currentPad].gain.value + change/100); 
             break; 
 
     }
