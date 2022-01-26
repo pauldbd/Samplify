@@ -22,7 +22,7 @@ body {
     background-color:rgb(148, 148, 148);  
     border-radius: 5%;
     box-shadow: 3px 3px rgb(182, 182, 182);
-    transition: ease-in-out all .2s;
+    transition: ease-in-out all .1s;
 }
 
 .sections{
@@ -37,6 +37,7 @@ body {
 }
 
 .key:hover{
+    transition: ease-in-out all .2s;
     opacity: 0.4; 
 }
 

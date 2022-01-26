@@ -5,6 +5,17 @@ const primaryGainCtrol = audioContext.createGain();
 const visualCanvas = document.getElementById("audioVizualization");
 primaryGainCtrol.connect(audioContext.destination); 
 
+let heightRatio = 0.15;
+const dpr = window.devicePixelRatio || 1;
+const padding = 0;
+visualCanvas.width = visualCanvas.offsetWidth * dpr;
+// visualCanvas.height = (visualCanvas.offsetHeight + padding * 2) * dpr;
+visualCanvas.height = visualCanvas.width * 0.12; 
+
+const visualContext = visualCanvas.getContext("2d"); 
+visualContext.translate(0, visualCanvas.height / 2 + padding); // Set Y = 0 to be in the middle of the visualCanvas
+let samples = visualCanvas.width - 20; 
+
 let currentEffect = 0;
 let currentEffectLabel = ["Master Gain", "Track Gain", "Start Time", "End Time"];
 let trackGains = []; 
@@ -22,8 +33,8 @@ for (let i = 0; i < 16; i++){
     const source = audioContext.createMediaElementSource(audios[i]); 
     source.connect(trackGains[i]); 
     trackGains[i].connect(primaryGainCtrol); 
-    startValues[i] = 0; 
-    endValues[i] = -1; 
+    startValues[i] = 1; 
+    endValues[i] = samples-1; 
     lengths[i] = 0; 
 }
 
@@ -34,21 +45,11 @@ document.onmousemove = function(event) {
 	pointerY = event.pageY;
 }
 
-let heightRatio = 0.15;
-const dpr = window.devicePixelRatio || 1;
-const padding = 0;
-visualCanvas.width = visualCanvas.offsetWidth * dpr;
-// visualCanvas.height = (visualCanvas.offsetHeight + padding * 2) * dpr;
-visualCanvas.height = visualCanvas.width * 0.12; 
-
-const visualContext = visualCanvas.getContext("2d"); 
-visualContext.translate(0, visualCanvas.height / 2 + padding); // Set Y = 0 to be in the middle of the visualCanvas
-let samples = visualCanvas.width - 20; 
 
 
 clearCanvas(); 
 updateCurrentAudio(); 
-updateFile(); 
+// updateFile(); 
 knobUpdate(); 
 keyPress(); 
 
@@ -60,18 +61,39 @@ async function keyPress(){
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
                 const file = document.getElementById("file-input"+(i+1)).files[0]; 
+                const key = document.getElementById("pad-"+(i+1)); 
+                key.style.backgroundColor = "rgb(124, 123, 123)"; 
                 if (file != null){
                     let duration = audios[i].duration; 
-                    audios[i].currentTime = duration/samples * startValues[currentPad]; 
+                    audios[i].currentTime = duration/samples * startValues[i]; 
                     audios[i].play();
+                    
                     setInterval(() => {
-                        if (audios[i].currentTime >= duration/samples * endValues[currentPad] && endValues[currentPad] != -1){
+                        if (audios[i].currentTime >= (duration/samples * endValues[i])){
                             audios[i].pause(audioContext.currentTime); 
                         } 
                     }, 10)
 
                 }
 
+            }
+        }
+
+        updateEffectLabel(event); 
+
+
+
+    })
+    window.addEventListener("keyup", async (event) => {
+
+        const keys = "asdfghjklzxcvbnm";
+
+        for (let i = 0; i < 16; i++){
+            if (keys[i] == event.key){
+                const key = document.getElementById("pad-"+(i+1));
+                setTimeout(function() {
+                    key.style.backgroundColor = "rgb(148, 148, 148)"; 
+                  }, 170); 
             }
         }
 
@@ -97,34 +119,44 @@ function updateEffectLabel(e){
 
 }
 
-function updateFile(){
-    for (let i = 0; i < 16; i++){
-        const file = document.getElementById("file-input"+(i+1)); 
-        file.addEventListener("input", function (event){
-            if (!fileIsEmpty(i)) audios[i].src = URL.createObjectURL(file.files[0]); 
-        })
-    }
-}
+// function updateFile(){
+//     for (let i = 0; i < 16; i++){
+//         const file = document.getElementById("file-input"+(i+1)); 
+//         file.addEventListener("input", function (event){
+//             if (!fileIsEmpty(i)) audios[i].src = URL.createObjectURL(file.files[0]); 
+//             endValues[i] = samples; 
+//             startValues[i] = 0; 
+//         })
+//     }
+// }
 
 function updateCurrentAudio(){
     for (let i = 1; i <= 16; i++){
         const key = document.getElementById("pad-"+i); 
         const file = document.getElementById("file-input"+i); 
         key.addEventListener("contextmenu", function (event) {
+            currentPad = i-1; 
             event.preventDefault()
             if (event.button == 2){
-                currentPad = i-1; 
                 updateAudioName(i-1);
                 if (!fileIsEmpty(i-1)){
                     visualizeAudio(i-1); 
+                    drawRangePoints(startValues[currentPad])
+                    drawRangePoints(endValues[currentPad])
                 }
                 else clearCanvas(); 
             }
         }); 
-        file.addEventListener("change", function(){
+        file.addEventListener("input", function(){
+            currentPad = i-1; 
+            endValues[i-1] = samples-1; 
+            startValues[i-1] = 1; 
             updateAudioName(i-1); 
             if (!fileIsEmpty(i-1)){
+                audios[i-1].src = URL.createObjectURL(file.files[0])
                 visualizeAudio(i-1); 
+                drawRangePoints(startValues[currentPad])
+                drawRangePoints(endValues[currentPad])
             }
             else clearCanvas(); 
         })
@@ -160,7 +192,6 @@ async function getAudioBuffer(pad, ChannelData){
 async function getData(pad, ChannelData){
     const rawData = await(getAudioBuffer(pad, ChannelData)); 
     lengths[pad] = rawData.length;  
-    console.log(lengths[pad]); 
     const blockSize = Math.floor(rawData.length / samples);
     let filteredData = [];
     let max = 0; 
@@ -179,7 +210,6 @@ async function getData(pad, ChannelData){
     const multiplyer = Math.pow(max, -1); 
     filteredData = filteredData.map(i => i * multiplyer); 
     filteredData = filteredData.map(i => i * (visualCanvas.height * 0.8))
-    console.log(filteredData.length); 
     return filteredData; 
 
 }
@@ -234,8 +264,7 @@ function knobUpdate(){
 }
 
 
-function eraseRangePoints(currentPad){
-    let i = startValues[currentPad]; 
+function eraseRangePoints(i){
 
     visualContext.clearRect(i, 0, 2, visualCanvas.height)
     visualContext.clearRect(i, -visualCanvas.height, 2, 2 * visualCanvas.height)
@@ -256,10 +285,10 @@ function eraseRangePoints(currentPad){
     visualContext.fillRect(0, 0, visualCanvas.width, dpr); 
 }
 
-function drawRangePoints(currentPad){
-    let i = startValues[currentPad]; 
+function drawRangePoints(i){
     visualContext.fillStyle = "black"; 
-    if (i >= 0 && i < currentData1.length){
+    if (i >= 0 && i < samples){
+        console.log('a'); 
         visualContext.fillRect(i, 0, 2, visualCanvas.height)
         visualContext.fillRect(i, -visualCanvas.height, 2, visualCanvas.height)
     }
@@ -276,12 +305,14 @@ function updateEffects(change){
             trackGains[currentPad].gain.value = Math.max(0, trackGains[currentPad].gain.value + change/100); 
             break; 
         case 2: 
-            eraseRangePoints(currentPad); 
+            eraseRangePoints(startValues[currentPad]); 
             startValues[currentPad] += change; 
-            drawRangePoints(currentPad); 
+            drawRangePoints(startValues[currentPad]); 
             break; 
         case 3: 
+            eraseRangePoints(endValues[currentPad])
             endValues[currentPad] += change; 
+            drawRangePoints(endValues[currentPad])
             break; 
 
 
