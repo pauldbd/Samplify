@@ -14,7 +14,7 @@ visualCanvas.height = visualCanvas.width * 0.12;
 
 const visualContext = visualCanvas.getContext("2d"); 
 visualContext.translate(0, visualCanvas.height / 2 + padding); // Set Y = 0 to be in the middle of the visualCanvas
-let samples = visualCanvas.width - 20; 
+let samples = visualCanvas.width; 
 
 let currentEffect = 0;
 let currentEffectLabel = ["Master Gain", "Track Gain", "Start Time", "End Time"];
@@ -33,8 +33,8 @@ for (let i = 0; i < 16; i++){
     const source = audioContext.createMediaElementSource(audios[i]); 
     source.connect(trackGains[i]); 
     trackGains[i].connect(primaryGainCtrol); 
-    startValues[i] = 1; 
-    endValues[i] = samples-1; 
+    startValues[i] = 0; 
+    endValues[i] = samples; 
     lengths[i] = 0; 
 }
 
@@ -46,17 +46,24 @@ document.onmousemove = function(event) {
 }
 
 
-
 clearCanvas(); 
+setUpHtml(); 
 updateCurrentAudio(); 
-// updateFile(); 
 knobUpdate(); 
 keyPress(); 
+
+function setUpHtml(){
+    const keys = "1234qwerasdfzxcv";
+    for (let i = 1; i <= 16; i++){
+        const label = document.getElementById("label-" + i); 
+        label.innerHTML = keys[i-1]; 
+    }
+}
 
 async function keyPress(){
     window.addEventListener("keydown", async (event) => {
 
-        const keys = "asdfghjklzxcvbnm";
+        const keys = "1234qwerasdfzxcv";
 
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
@@ -64,12 +71,10 @@ async function keyPress(){
                 const key = document.getElementById("pad-"+(i+1)); 
                 key.style.backgroundColor = "rgb(124, 123, 123)"; 
                 if (file != null){
-                    let duration = audios[i].duration; 
-                    audios[i].currentTime = duration/samples * startValues[i]; 
+                    audios[i].currentTime = (audios[i].duration/samples * startValues[i]); 
                     audios[i].play();
-                    
                     setInterval(() => {
-                        if (audios[i].currentTime >= (duration/samples * endValues[i])){
+                        if (audios[i].currentTime >= (audios[i].duration/samples * endValues[i])){
                             audios[i].pause(audioContext.currentTime); 
                         } 
                     }, 10)
@@ -86,7 +91,7 @@ async function keyPress(){
     })
     window.addEventListener("keyup", async (event) => {
 
-        const keys = "asdfghjklzxcvbnm";
+        const keys = "1234qwerasdfzxcv";
 
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
@@ -96,9 +101,6 @@ async function keyPress(){
                   }, 170); 
             }
         }
-
-        updateEffectLabel(event); 
-
 
 
     })
@@ -119,17 +121,6 @@ function updateEffectLabel(e){
 
 }
 
-// function updateFile(){
-//     for (let i = 0; i < 16; i++){
-//         const file = document.getElementById("file-input"+(i+1)); 
-//         file.addEventListener("input", function (event){
-//             if (!fileIsEmpty(i)) audios[i].src = URL.createObjectURL(file.files[0]); 
-//             endValues[i] = samples; 
-//             startValues[i] = 0; 
-//         })
-//     }
-// }
-
 function updateCurrentAudio(){
     for (let i = 1; i <= 16; i++){
         const key = document.getElementById("pad-"+i); 
@@ -144,13 +135,13 @@ function updateCurrentAudio(){
                     drawRangePoints(startValues[currentPad])
                     drawRangePoints(endValues[currentPad])
                 }
-                else clearCanvas(); 
+                else clearCanvas();
             }
         }); 
         file.addEventListener("input", function(){
             currentPad = i-1; 
             endValues[i-1] = samples-1; 
-            startValues[i-1] = 1; 
+            startValues[i-1] = 0; 
             updateAudioName(i-1); 
             if (!fileIsEmpty(i-1)){
                 audios[i-1].src = URL.createObjectURL(file.files[0])
@@ -276,10 +267,10 @@ function eraseRangePoints(i){
         visualContext.fillRect(i, -Math.round(currentData2[i]/2), 1, Math.round(currentData2[i]/2))
     }
     i += 1; 
-    if (i >= 0 && i < currentData1.length) {
+    if (i >= 0 && i < samples) {
         visualContext.fillRect(i, 0, 1, Math.round(currentData1[i]/2))
     }
-    if (i >= 0 && i < currentData1.length) {
+    if (i >= 0 && i < samples) {
         visualContext.fillRect(i, -Math.round(currentData2[i]/2), 1, Math.round(currentData2[i]/2))
     }
     visualContext.fillRect(0, 0, visualCanvas.width, dpr); 
@@ -287,7 +278,7 @@ function eraseRangePoints(i){
 
 function drawRangePoints(i){
     visualContext.fillStyle = "black"; 
-    if (i >= 0 && i < samples){
+    if (i >= 0 && i <= samples){
         console.log('a'); 
         visualContext.fillRect(i, 0, 2, visualCanvas.height)
         visualContext.fillRect(i, -visualCanvas.height, 2, visualCanvas.height)
