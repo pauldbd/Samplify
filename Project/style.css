@@ -156,7 +156,7 @@ body {
 
 .buttons{
     background-color:rgb(182, 182, 182);  
-    box-shadow: 3px 3px rgb(231, 231, 231);
+    box-shadow: 3px 3px rgb(148, 148, 148);  
     height: 2vw;
     width: 6vw;
     text-align: center;
@@ -175,4 +175,13 @@ body {
 .buttons:hover{
     opacity: 0.7;
     
+}
+
+.buttons:active{
+    transition: ease-in-out all 0.1s; 
+    transform: scale(0.9);
+}
+
+.buttonSections{
+    display: flex;
 }

@@ -17,25 +17,31 @@ visualContext.translate(0, visualCanvas.height / 2 + padding); // Set Y = 0 to b
 let samples = visualCanvas.width; 
 
 let currentEffect = 0;
-let currentEffectLabel = ["Master Gain", "Track Gain", "Start Time", "End Time"];
+let currentEffectLabel = ["Master Gain: ", "Track Gain: ", "Start Time: ", "End Time: "];
 let trackGains = []; 
+let muteGains = []; 
 let startValues = []; 
 let endValues = []; 
 let currentPad = 0; 
 let lengths = []; 
 let currentData1 = []; 
 let currentData2 = []; 
+let isMuted = []; 
+let copiedPad = -1; 
 
 const audios = []; 
 for (let i = 0; i < 16; i++){
     audios[i] = new Audio(); 
     trackGains[i] = audioContext.createGain(); 
+    muteGains[i] = audioContext.createGain(); 
     const source = audioContext.createMediaElementSource(audios[i]); 
     source.connect(trackGains[i]); 
-    trackGains[i].connect(primaryGainCtrol); 
+    trackGains[i].connect(muteGains[i]);
+    muteGains[i].connect(primaryGainCtrol);  
     startValues[i] = 0; 
     endValues[i] = samples; 
     lengths[i] = 0; 
+    isMuted[i] = false; 
 }
 
 let pointerX = null, pointerY = null, knobValue = 0; 
@@ -50,7 +56,8 @@ clearCanvas();
 setUpHtml(); 
 updateCurrentAudio(); 
 knobUpdate(); 
-updateCopy(); 
+updateCopyAndPaste(); 
+mute(); 
 keyPress(); 
 
 function setUpHtml(){
@@ -76,7 +83,7 @@ async function keyPress(){
                     audios[i].play();
                     setInterval(() => {
                         if (audios[i].currentTime >= (audios[i].duration/samples * endValues[i])){
-                            audios[i].pause(audioContext.currentTime); 
+                            audios[i].pause(audioContext.currentTime);
                         } 
                     }, 10)
 
@@ -118,7 +125,18 @@ function updateEffectLabel(e){
     currentEffect += currentEffectLabel.length; 
     currentEffect %= currentEffectLabel.length; 
     const label = document.getElementById("effectsLabel");
-    label.innerHTML = currentEffectLabel[currentEffect];
+    let string = ""; 
+    switch (currentEffect){
+        case 0: 
+            let masterGain = parseFloat(20 * log10(primaryGainCtrol.gain.value)).toFixed(2); 
+            string += " " + masterGain + " dB"; 
+            break; 
+        case 1: 
+            let trackGain = parseFloat(20 * log10(trackGains[currentPad].gain.value)).toFixed(2); 
+            string += " " + trackGain + " dB"; 
+            break; 
+    }
+    label.innerHTML = currentEffectLabel[currentEffect] + string;
 
 }
 
@@ -127,8 +145,10 @@ function updateCurrentAudio(){
         const key = document.getElementById("pad-"+i); 
         const file = document.getElementById("file-input"+i); 
         key.addEventListener("contextmenu", function (event) {
+            outline(currentPad, i-1); 
             currentPad = i-1; 
             event.preventDefault()
+            muteColor(); 
             if (event.button == 2){
                 updateAudioName(i-1);
                 if (!fileIsEmpty(i-1)){
@@ -140,10 +160,12 @@ function updateCurrentAudio(){
             }
         }); 
         file.addEventListener("input", function(){
+            outline(currentPad, i-1); 
             currentPad = i-1; 
             endValues[i-1] = samples-1; 
             startValues[i-1] = 0; 
             updateAudioName(i-1); 
+            muteColor(); 
             if (!fileIsEmpty(i-1)){
                 audios[i-1].src = URL.createObjectURL(file.files[0])
                 visualizeAudio(i-1); 
@@ -161,6 +183,15 @@ function fileIsEmpty(pad){
     return file.files[0] == undefined; 
 }
 
+function outline(oldPad, pad){
+    const oldKey = document.getElementById("label-"+(oldPad+1)); 
+    const newKey = document.getElementById("label-"+(pad+1)); 
+
+    oldKey.style.outline = "none"; 
+    newKey.style.color = "solid "; 
+
+}
+
 function updateAudioName(pad){
     const audioLabel = document.getElementById("audioLabel"); 
     const file = document.getElementById("file-input"+(pad+1)); 
@@ -170,6 +201,7 @@ function updateAudioName(pad){
     else{
         audioLabel.innerHTML = "Pad " + (pad+1) + ": " + file.files[0].name; 
     }
+
 }
 
 async function getAudioBuffer(pad, ChannelData){
@@ -291,7 +323,8 @@ function drawRangePoints(i){
 function updateEffects(change){
     switch (currentEffect){
         case 0: 
-            primaryGainCtrol.gain.value = Math.max(0, primaryGainCtrol.gain.value + change/100); 
+            primaryGainCtrol.gain.value = Math.max(0, primaryGainCtrol.gain.value + change/100);
+
             break; 
         case 1: 
             trackGains[currentPad].gain.value = Math.max(0, trackGains[currentPad].gain.value + change/100); 
@@ -311,8 +344,59 @@ function updateEffects(change){
 
     }
 
+    updateEffectLabel(0); 
+
 }
 
-function updateCopy(){
+function updateCopyAndPaste(){
+    const copyButton = document.getElementById("copyButton"); 
+    const pasteButton = document.getElementById("pasteButton"); 
+    
+    copyButton.addEventListener("click", function (event){
+        copiedPad = currentPad; 
+        console.log(copiedPad); 
+    })
 
+    pasteButton.addEventListener("click", function (event){
+        const file = document.getElementById("file-input"+(currentPad+1)); 
+        file.files = document.getElementById("file-input"+(copiedPad+1)).files; 
+        audios[currentPad].src = URL.createObjectURL(file.files[0]); 
+        updateAudioName(currentPad);
+        visualizeAudio(currentPad); 
+    })
+
+    
+
+}
+
+function muteColor(){
+    if (isMuted[currentPad]){
+        muteButton.style.backgroundColor = "rgb(92, 92, 91)"; 
+    }
+    else{
+        muteButton.style.backgroundColor = "rgb(182, 182, 182)"; 
+    }
+}
+
+function mute(){
+    const muteButton = document.getElementById("muteButton"); 
+    muteButton.addEventListener("click", function (event){  
+        isMuted[currentPad] = !isMuted[currentPad]; 
+        if (isMuted[currentPad]){
+            muteGains[currentPad].gain.value = 0; 
+        }
+        else{
+            muteGains[currentPad].gain.value = 1; 
+        }
+
+        muteColor(); 
+
+
+
+    })
+}
+
+
+function log10(x) {
+    return Math.log(x)/Math.LN10;
 }
