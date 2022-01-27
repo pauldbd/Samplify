@@ -50,20 +50,21 @@ clearCanvas();
 setUpHtml(); 
 updateCurrentAudio(); 
 knobUpdate(); 
+updateCopy(); 
 keyPress(); 
 
 function setUpHtml(){
-    const keys = "1234qwerasdfzxcv";
+    const keys = "qwertyuiasdfghjk";
     for (let i = 1; i <= 16; i++){
         const label = document.getElementById("label-" + i); 
-        label.innerHTML = keys[i-1]; 
+        label.innerHTML = keys[i-1].toUpperCase(); 
     }
 }
 
 async function keyPress(){
     window.addEventListener("keydown", async (event) => {
 
-        const keys = "1234qwerasdfzxcv";
+        const keys = "qwertyuiasdfghjk";
 
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
@@ -91,14 +92,14 @@ async function keyPress(){
     })
     window.addEventListener("keyup", async (event) => {
 
-        const keys = "1234qwerasdfzxcv";
+        const keys = "qwertyuiasdfghjk";
 
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
                 const key = document.getElementById("pad-"+(i+1));
                 setTimeout(function() {
                     key.style.backgroundColor = "rgb(148, 148, 148)"; 
-                  }, 170); 
+                  }, 160); 
             }
         }
 
@@ -309,5 +310,9 @@ function updateEffects(change){
 
 
     }
+
+}
+
+function updateCopy(){
 
 }

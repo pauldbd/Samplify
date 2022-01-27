@@ -129,7 +129,7 @@ body {
     text-align: center;
     margin-left: auto;
     margin-right: auto;
-    height: 1.5vw;
+    /* height: 1.5vw; */
     font-size: 1.2vw;
 }
 
@@ -146,4 +146,33 @@ body {
     align-content: center;
     justify-content: center;
     /* background-color: rgba(161, 153, 142, 0.548); */
+}
+
+.buttons{
+    float: left;
+    margin-top: 5%;
+    margin-left: 5%;
+}
+
+.buttons{
+    background-color:rgb(182, 182, 182);  
+    box-shadow: 3px 3px rgb(231, 231, 231);
+    height: 2vw;
+    width: 6vw;
+    text-align: center;
+    border-radius: 5%;
+    transition: ease-in-out all 0.2s; 
+
+}
+
+.buttonLabel{
+    color: rgb(240, 240, 240);
+    margin-top: 2%; 
+    font-size: 1.1vw;
+    user-select: none;
+}
+
+.buttons:hover{
+    opacity: 0.7;
+    
 }
