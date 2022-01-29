@@ -19,10 +19,16 @@ body {
     position: relative; 
     margin-top: 0.1vw;
     margin-left: 0.1vw;
-    background-color:rgb(148, 148, 148);  
+    background-color:rgb(148, 148, 148);
     border-radius: 5%;
     box-shadow: 3px 3px rgb(182, 182, 182);
     transition: ease-in-out all .1s;
+
+}
+
+.key:active{
+    transition: ease-in-out all 0.1s; 
+    transform: scale(0.9);
 }
 
 .sections{
@@ -184,4 +190,9 @@ body {
 
 .buttonSections{
     display: flex;
+    align-content: center;
+}
+
+#copyButton{
+    margin-left: 5.3vw;
 }

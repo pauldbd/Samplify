@@ -27,6 +27,7 @@ let lengths = [];
 let currentData1 = []; 
 let currentData2 = []; 
 let isMuted = []; 
+let isReplay = []; 
 let copiedPad = -1; 
 
 const audios = []; 
@@ -42,6 +43,7 @@ for (let i = 0; i < 16; i++){
     endValues[i] = samples; 
     lengths[i] = 0; 
     isMuted[i] = false; 
+    isReplay[i] = false; 
 }
 
 let pointerX = null, pointerY = null, knobValue = 0; 
@@ -58,6 +60,8 @@ updateCurrentAudio();
 knobUpdate(); 
 updateCopyAndPaste(); 
 mute(); 
+reset(); 
+replay(); 
 keyPress(); 
 
 function setUpHtml(){
@@ -76,14 +80,21 @@ async function keyPress(){
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
                 const file = document.getElementById("file-input"+(i+1)).files[0]; 
+                console.log(file); 
                 const key = document.getElementById("pad-"+(i+1)); 
-                key.style.backgroundColor = "rgb(124, 123, 123)"; 
+                key.style.backgroundColor = "rgb(124, 123, 123)";
                 if (file != null){
                     audios[i].currentTime = (audios[i].duration/samples * startValues[i]); 
                     audios[i].play();
-                    setInterval(() => {
+                    let playInterval = setInterval(() => {
                         if (audios[i].currentTime >= (audios[i].duration/samples * endValues[i])){
                             audios[i].pause(audioContext.currentTime);
+                            if (isReplay[i]){
+                                audios[i].play(audioContext.currentTime); 
+                            }
+                            else{
+                                clearInterval(playInterval); 
+                            }
                         } 
                     }, 10)
 
@@ -127,13 +138,35 @@ function updateEffectLabel(e){
     const label = document.getElementById("effectsLabel");
     let string = ""; 
     switch (currentEffect){
-        case 0: 
+        case 0:
             let masterGain = parseFloat(20 * log10(primaryGainCtrol.gain.value)).toFixed(2); 
             string += " " + masterGain + " dB"; 
             break; 
         case 1: 
             let trackGain = parseFloat(20 * log10(trackGains[currentPad].gain.value)).toFixed(2); 
             string += " " + trackGain + " dB"; 
+            break; 
+        case 2: 
+            let Time = (audios[currentPad].duration/samples * startValues[currentPad]); 
+            let startMin = parseFloat(Time/60).toFixed(0); 
+            let startSec = parseFloat(Time - startMin).toFixed(2); 
+            if (isNaN(audios[currentPad].duration)){
+                string = " 0:0.0"; 
+            }
+            else{
+                string += " " + startMin + ":" + startSec; 
+            }
+            break; 
+        case 3:
+            let endTime = (audios[currentPad].duration/samples * endValues[currentPad]); 
+            let endMin = parseFloat(endTime/60).toFixed(0); 
+            let endSec = parseFloat(endTime - endMin).toFixed(2); 
+            if (isNaN(audios[currentPad].duration)){
+                string += " 0:0.0"; 
+            }
+            else{
+                string += " " + endMin + ":" + endSec; 
+            }
             break; 
     }
     label.innerHTML = currentEffectLabel[currentEffect] + string;
@@ -149,6 +182,9 @@ function updateCurrentAudio(){
             currentPad = i-1; 
             event.preventDefault()
             muteColor(); 
+            replayColor(); 
+            currentData1 = []; 
+            currentData2 = []; 
             if (event.button == 2){
                 updateAudioName(i-1);
                 if (!fileIsEmpty(i-1)){
@@ -164,8 +200,13 @@ function updateCurrentAudio(){
             currentPad = i-1; 
             endValues[i-1] = samples-1; 
             startValues[i-1] = 0; 
+            currentData1 = []; 
+            currentData2 = []; 
+            isReplay[i] = false; 
+            isMuted[i] = false; 
             updateAudioName(i-1); 
             muteColor(); 
+            replayColor(); 
             if (!fileIsEmpty(i-1)){
                 audios[i-1].src = URL.createObjectURL(file.files[0])
                 visualizeAudio(i-1); 
@@ -184,11 +225,13 @@ function fileIsEmpty(pad){
 }
 
 function outline(oldPad, pad){
-    const oldKey = document.getElementById("label-"+(oldPad+1)); 
-    const newKey = document.getElementById("label-"+(pad+1)); 
+    const oldKey = document.getElementById("pad-"+(oldPad+1)); 
+    const newKey = document.getElementById("pad-"+(pad+1)); 
 
+    oldKey.style.transform = "scale(1)"; 
     oldKey.style.outline = "none"; 
-    newKey.style.color = "solid "; 
+    newKey.style.outline = "solid rgb(102, 102, 102) 2px"; 
+    newKey.style.transform = "scale(0.95)"; 
 
 }
 
@@ -269,7 +312,7 @@ function knobUpdate(){
     knob.addEventListener("mousedown", function (event){
         holding = true; 
         prev = pointerY; 
-        mousetInterval = setInterval(() => {
+        mouseInterval = setInterval(() => {
             if (holding){
                 knobValue += (prev - pointerY); 
                 knob.style.transform = "rotate(" + knobValue%361 + "deg)"; 
@@ -312,7 +355,6 @@ function eraseRangePoints(i){
 function drawRangePoints(i){
     visualContext.fillStyle = "black"; 
     if (i >= 0 && i <= samples){
-        console.log('a'); 
         visualContext.fillRect(i, 0, 2, visualCanvas.height)
         visualContext.fillRect(i, -visualCanvas.height, 2, visualCanvas.height)
     }
@@ -324,7 +366,6 @@ function updateEffects(change){
     switch (currentEffect){
         case 0: 
             primaryGainCtrol.gain.value = Math.max(0, primaryGainCtrol.gain.value + change/100);
-
             break; 
         case 1: 
             trackGains[currentPad].gain.value = Math.max(0, trackGains[currentPad].gain.value + change/100); 
@@ -370,11 +411,22 @@ function updateCopyAndPaste(){
 }
 
 function muteColor(){
+    const muteButton = document.getElementById("muteButton"); 
     if (isMuted[currentPad]){
         muteButton.style.backgroundColor = "rgb(92, 92, 91)"; 
     }
     else{
         muteButton.style.backgroundColor = "rgb(182, 182, 182)"; 
+    }
+}
+
+function replayColor(){
+    const replayButton = document.getElementById("replayButton"); 
+    if (isReplay[currentPad]){
+        replayButton.style.backgroundColor = "rgb(92, 92, 91)"; 
+    }
+    else{
+        replayButton.style.backgroundColor = "rgb(182, 182, 182)"; 
     }
 }
 
@@ -389,13 +441,48 @@ function mute(){
             muteGains[currentPad].gain.value = 1; 
         }
 
-        muteColor(); 
+        muteColor();
 
 
 
     })
 }
 
+function replay(){
+    const replayButton = document.getElementById("replayButton"); 
+    replayButton.addEventListener("click", function (event){  
+        isReplay[currentPad] = !isReplay[currentPad]; 
+        replayColor();
+    })
+}
+
+function reset(){
+    const resetButton = document.getElementById("resetButton"); 
+
+    resetButton.addEventListener("click", function(event){
+        switch(currentEffect){
+            case 0: 
+                primaryGainCtrol.gain.value = 1;
+                break; 
+            case 1: 
+                trackGains[currentPad].gain.value = 1; 
+                break; 
+            case 2: 
+                eraseRangePoints(startValues[currentPad]); 
+                startValues[currentPad] = 0; 
+                drawRangePoints(startValues[currentPad]); 
+                break; 
+            case 3: 
+                eraseRangePoints(endValues[currentPad])
+                endValues[currentPad] = samples-1; 
+                drawRangePoints(endValues[currentPad])
+                break; 
+    
+
+        }
+        updateEffectLabel(0); 
+    })
+}
 
 function log10(x) {
     return Math.log(x)/Math.LN10;
