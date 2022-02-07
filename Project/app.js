@@ -1,18 +1,26 @@
 console.clear(); 
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext);
-const primaryGainCtrol = audioContext.createGain(); 
+const primaryGainControl = audioContext.createGain(); 
 const visualCanvas = document.getElementById("audioVizualization");
-primaryGainCtrol.connect(audioContext.destination); 
+const rangeCanvas = document.getElementById("rangeVizualization");
+const spectrumCanvas = document.getElementById("spectrumVizualization"); 
+primaryGainControl.connect(audioContext.destination); 
 
 let heightRatio = 0.15;
 const dpr = window.devicePixelRatio || 1;
 const padding = 0;
 visualCanvas.width = visualCanvas.offsetWidth * dpr;
-// visualCanvas.height = (visualCanvas.offsetHeight + padding * 2) * dpr;
 visualCanvas.height = visualCanvas.width * 0.12; 
+rangeCanvas.width = rangeCanvas.offsetWidth * dpr;
+rangeCanvas.height = rangeCanvas.width * 0.12; 
+spectrumCanvas.width *= dpr; 
+spectrumCanvas.height *= dpr; 
+
 
 const visualContext = visualCanvas.getContext("2d"); 
+const spectrumContext = spectrumCanvas.getContext("2d"); 
+const rangeContext = rangeCanvas.getContext("2d"); 
 visualContext.translate(0, visualCanvas.height / 2 + padding); // Set Y = 0 to be in the middle of the visualCanvas
 let samples = visualCanvas.width; 
 
@@ -21,7 +29,7 @@ let currentEffectLabel = ["Master Gain: ", "Track Gain: ", "Start Time: ", "End 
 let trackGains = []; 
 let muteGains = []; 
 let startValues = []; 
-let endValues = []; 
+let endValues = [];
 let currentPad = 0; 
 let lengths = []; 
 let currentData1 = []; 
@@ -29,6 +37,8 @@ let currentData2 = [];
 let isMuted = []; 
 let isReplay = []; 
 let copiedPad = -1; 
+let recording = false; 
+let durations = []; 
 
 const audios = []; 
 for (let i = 0; i < 16; i++){
@@ -38,12 +48,13 @@ for (let i = 0; i < 16; i++){
     const source = audioContext.createMediaElementSource(audios[i]); 
     source.connect(trackGains[i]); 
     trackGains[i].connect(muteGains[i]);
-    muteGains[i].connect(primaryGainCtrol);  
+    muteGains[i].connect(primaryGainControl);  
     startValues[i] = 0; 
     endValues[i] = samples; 
     lengths[i] = 0; 
     isMuted[i] = false; 
     isReplay[i] = false; 
+    durations[i] = 0; 
 }
 
 let pointerX = null, pointerY = null, knobValue = 0; 
@@ -59,10 +70,12 @@ setUpHtml();
 updateCurrentAudio(); 
 knobUpdate(); 
 updateCopyAndPaste(); 
+record(); 
 mute(); 
 reset(); 
 replay(); 
-keyPress(); 
+drawRangePoints(); 
+audioDetectPlay(); 
 
 function setUpHtml(){
     const keys = "qwertyuiasdfghjk";
@@ -72,34 +85,40 @@ function setUpHtml(){
     }
 }
 
-async function keyPress(){
+function playAudio(i){
+    const key = document.getElementById("pad-"+(i+1)); 
+    key.style.backgroundColor = "rgb(124, 123, 123)";
+    if (audios[i].src != ""){
+        let duration = audios[i].duration; 
+        if (isNaN(duration) || duration == Infinity){
+            duration = durations[i]; 
+        }
+        audios[i].currentTime = (duration/samples * startValues[i]); 
+        audios[i].play();
+        playingPad = i; 
+        let prev = audios[i].currentTime; 
+        setInterval(() => {
+            if (audios[i].currentTime >= (duration/samples * endValues[i])){
+                audios[i].pause(audioContext.currentTime);
+                if (isReplay[i]){
+                    audios[i].currentTime = (duration/samples * startValues[i]); 
+                    audios[i].play(); 
+                }
+
+            }
+        }, 1)
+
+    }
+}
+
+async function audioDetectPlay(){
     window.addEventListener("keydown", async (event) => {
 
         const keys = "qwertyuiasdfghjk";
 
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
-                const file = document.getElementById("file-input"+(i+1)).files[0]; 
-                console.log(file); 
-                const key = document.getElementById("pad-"+(i+1)); 
-                key.style.backgroundColor = "rgb(124, 123, 123)";
-                if (file != null){
-                    audios[i].currentTime = (audios[i].duration/samples * startValues[i]); 
-                    audios[i].play();
-                    let playInterval = setInterval(() => {
-                        if (audios[i].currentTime >= (audios[i].duration/samples * endValues[i])){
-                            audios[i].pause(audioContext.currentTime);
-                            if (isReplay[i]){
-                                audios[i].play(audioContext.currentTime); 
-                            }
-                            else{
-                                clearInterval(playInterval); 
-                            }
-                        } 
-                    }, 10)
-
-                }
-
+                playAudio(i); 
             }
         }
 
@@ -123,6 +142,25 @@ async function keyPress(){
 
 
     })
+
+    const startButton = document.getElementById("startButton"); 
+    const pauseButton = document.getElementById("pauseButton"); 
+
+    startButton.addEventListener("click", function(event){
+        playAudio(currentPad); 
+    }); 
+
+    pauseButton.addEventListener("click", function (event){
+        try{
+            audios[currentPad].pause(); 
+        }
+        catch(error){
+            
+        }
+    })
+
+
+
 }
 
 function updateEffectLabel(e){
@@ -139,7 +177,7 @@ function updateEffectLabel(e){
     let string = ""; 
     switch (currentEffect){
         case 0:
-            let masterGain = parseFloat(20 * log10(primaryGainCtrol.gain.value)).toFixed(2); 
+            let masterGain = parseFloat(20 * log10(primaryGainControl.gain.value)).toFixed(2); 
             string += " " + masterGain + " dB"; 
             break; 
         case 1: 
@@ -156,6 +194,7 @@ function updateEffectLabel(e){
             else{
                 string += " " + startMin + ":" + startSec; 
             }
+            string += " sec."; 
             break; 
         case 3:
             let endTime = (audios[currentPad].duration/samples * endValues[currentPad]); 
@@ -167,6 +206,7 @@ function updateEffectLabel(e){
             else{
                 string += " " + endMin + ":" + endSec; 
             }
+            string += " sec."; 
             break; 
     }
     label.innerHTML = currentEffectLabel[currentEffect] + string;
@@ -187,10 +227,8 @@ function updateCurrentAudio(){
             currentData2 = []; 
             if (event.button == 2){
                 updateAudioName(i-1);
-                if (!fileIsEmpty(i-1)){
+                if (audios[i-1].src != ""){
                     visualizeAudio(i-1); 
-                    drawRangePoints(startValues[currentPad])
-                    drawRangePoints(endValues[currentPad])
                 }
                 else clearCanvas();
             }
@@ -210,8 +248,6 @@ function updateCurrentAudio(){
             if (!fileIsEmpty(i-1)){
                 audios[i-1].src = URL.createObjectURL(file.files[0])
                 visualizeAudio(i-1); 
-                drawRangePoints(startValues[currentPad])
-                drawRangePoints(endValues[currentPad])
             }
             else clearCanvas(); 
         })
@@ -248,8 +284,7 @@ function updateAudioName(pad){
 }
 
 async function getAudioBuffer(pad, ChannelData){
-    const file = document.getElementById("file-input"+(pad+1)); 
-    const url = URL.createObjectURL(file.files[0]);
+    const url = audios[pad].src; 
     const response = await(fetch(url)); 
     const arrayBuffer = await(response.arrayBuffer()); 
     const audioBuffer = await(audioContext.decodeAudioData(arrayBuffer)); 
@@ -294,9 +329,14 @@ async function visualizeAudio(pad){
     for (let i = 0; i < samples; i++){
         visualContext.fillRect(i, 0, 1, Math.round(filteredData[i]/2))
     }
- 
 
-    filteredData = await(getData(pad,1));
+    try{
+        filteredData = await(getData(pad,1));
+    }
+    catch (error){
+        filteredData = await(getData(pad, 0)); 
+    }
+ 
     currentData2 = filteredData; 
     let i = 0; 
     for (i = 0; i < samples; i++){
@@ -352,36 +392,42 @@ function eraseRangePoints(i){
     visualContext.fillRect(0, 0, visualCanvas.width, dpr); 
 }
 
-function drawRangePoints(i){
-    visualContext.fillStyle = "black"; 
-    if (i >= 0 && i <= samples){
-        visualContext.fillRect(i, 0, 2, visualCanvas.height)
-        visualContext.fillRect(i, -visualCanvas.height, 2, visualCanvas.height)
+function drawRangePoints(){
+    // visualContext.fillStyle = "black"; 
+    // if (i >= 0 && i <= samples){
+    //     visualContext.fillRect(i, 0, 2, visualCanvas.height)
+    //     visualContext.fillRect(i, -visualCanvas.height, 2, visualCanvas.height)
+    // }
+    // visualContext.fillStyle = "rgb(92, 92, 91)"; 
+    const WIDTH = rangeCanvas.width
+    const HEIGHT = rangeCanvas.height;
+    requestAnimationFrame(drawRangePoints)
+    
+    rangeContext.clearRect(0, -HEIGHT, WIDTH, 2*HEIGHT); 
+    rangeContext.fillRect(startValues[currentPad], -visualCanvas.height, 2, 2*visualCanvas.height)
+    rangeContext.fillRect(endValues[currentPad], -visualCanvas.height, 2, 2*visualCanvas.height)
+    let duration = audios[currentPad].duration; 
+    if (isNaN(duration) || durations == Infinity){
+        duration = durations[currentPad]; 
     }
-    visualContext.fillStyle = "rgb(92, 92, 91)"; 
+    rangeContext.fillRect(Math.min(Math.max(Math.floor((audios[currentPad].currentTime * samples)/duration), startValues[currentPad]), endValues[currentPad]), -visualCanvas.height, 2, 2*visualCanvas.height)
 }
 
 
 function updateEffects(change){
     switch (currentEffect){
         case 0: 
-            primaryGainCtrol.gain.value = Math.max(0, primaryGainCtrol.gain.value + change/100);
+            primaryGainControl.gain.value = Math.max(0, primaryGainControl.gain.value + change/100);
             break; 
         case 1: 
             trackGains[currentPad].gain.value = Math.max(0, trackGains[currentPad].gain.value + change/100); 
             break; 
         case 2: 
-            eraseRangePoints(startValues[currentPad]); 
             startValues[currentPad] += change; 
-            drawRangePoints(startValues[currentPad]); 
             break; 
         case 3: 
-            eraseRangePoints(endValues[currentPad])
             endValues[currentPad] += change; 
-            drawRangePoints(endValues[currentPad])
             break; 
-
-
 
     }
 
@@ -461,28 +507,175 @@ function reset(){
 
     resetButton.addEventListener("click", function(event){
         switch(currentEffect){
-            case 0: 
-                primaryGainCtrol.gain.value = 1;
+            case 0:
+                primaryGainControl.gain.value = 1;
                 break; 
             case 1: 
                 trackGains[currentPad].gain.value = 1; 
                 break; 
             case 2: 
-                eraseRangePoints(startValues[currentPad]); 
                 startValues[currentPad] = 0; 
-                drawRangePoints(startValues[currentPad]); 
                 break; 
             case 3: 
-                eraseRangePoints(endValues[currentPad])
                 endValues[currentPad] = samples-1; 
-                drawRangePoints(endValues[currentPad])
                 break; 
-    
-
         }
         updateEffectLabel(0); 
     })
 }
+
+function record(){
+    const recordButton = document.getElementById("recordButton"); 
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        console.log('getUserMedia supported.');
+        navigator.mediaDevices.getUserMedia (
+           // constraints - only audio needed for this app
+           {
+              audio: true
+           })
+     
+           // Success callback
+           .then(function(stream) {
+               recordEvents(stream); 
+           })
+     
+           // Error callback
+           .catch(function(err) {
+              console.log('The following getUserMedia error occurred: ' + err);
+           }
+        );
+     } else {
+        console.log('getUserMedia not supported on your browser!');
+     }
+
+}
+
+function recordEvents(stream){
+    visualize(stream); 
+    const mediaRecorder = new MediaRecorder(stream);
+    const recordButton = document.getElementById("recordButton");
+    const eraseButton = document.getElementById("eraseButton");
+    let chunks = [];
+    let t0; 
+    recordButton.addEventListener("click", function (event){
+        if (!recording){
+            t0 = performance.now(); 
+            recording = true;
+            mediaRecorder.start();
+            console.log(mediaRecorder.state);
+            console.log("recorder started");
+            recordButton.style.background = "rgb(92, 92, 91)";
+            // recordButton.style.color = "black";
+        }
+        else{
+            recording = false; 
+            t1 = performance.now(); 
+            mediaRecorder.stop(); 
+            recordButton.style.background = "rgb(182, 182, 182)"; 
+            durations[currentPad] = t1 - t0;  
+        }
+
+    })
+
+    mediaRecorder.addEventListener("stop", function (event){
+        const blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+        const url = URL.createObjectURL(blob); 
+        chunks = []; 
+        audios[currentPad].src = url;
+        console.log(audios[currentPad].duration); 
+        endValues[currentPad] = samples-1; 
+        startValues[currentPad] = 0; 
+        currentData1 = []; 
+        currentData2 = []; 
+        isReplay[currentPad] = false; 
+        isMuted[currentPad] = false; 
+        updateAudioName(currentPad); 
+        muteColor(); 
+        replayColor();
+        visualizeAudio(currentPad); 
+    })
+
+    eraseButton.addEventListener("click", function(event){
+        audios[currentPad].src = '';
+        chunks = []; 
+        endValues[currentPad] = samples-1; 
+        startValues[currentPad] = 0; 
+        currentData1 = []; 
+        currentData2 = []; 
+        isReplay[currentPad] = false; 
+        isMuted[currentPad] = false; 
+        updateAudioName(currentPad); 
+        muteColor(); 
+        replayColor();
+        visualizeAudio(currentPad); 
+
+    })
+
+    mediaRecorder.ondataavailable = function(e) {
+        chunks.push(e.data);
+    }
+
+}
+
+function visualize(stream) {
+    const source = audioContext.createMediaStreamSource(stream);
+  
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    draw()
+  
+    function draw() {
+      const WIDTH = spectrumCanvas.width
+      const HEIGHT = spectrumCanvas.height;
+  
+      requestAnimationFrame(draw);
+      source.connect(analyser); 
+      primaryGainControl.connect(analyser); 
+
+      if (recording){
+        primaryGainControl.disconnect(analyser); 
+      }
+      else{
+        source.disconnect(analyser); 
+      }
+
+
+      analyser.getByteTimeDomainData(dataArray);
+  
+      spectrumContext.fillStyle = 'rgb(228, 220, 208)';
+      spectrumContext.fillRect(0, 0, WIDTH, HEIGHT);
+  
+      spectrumContext.lineWidth = 2;
+      spectrumContext.strokeStyle = 'rgb(0, 0, 0)';
+  
+      spectrumContext.beginPath();
+  
+      let sliceWidth = WIDTH * 1.0 / bufferLength;
+      let x = 0;
+  
+  
+      for(let i = 0; i < bufferLength; i++) {
+  
+        let v = dataArray[i] / 128.0;
+        let y = v * HEIGHT/2;
+  
+        if(i === 0) {
+            spectrumContext.moveTo(x, y);
+        } else {
+            spectrumContext.lineTo(x, y);
+        }
+  
+        x += sliceWidth;
+      }
+  
+      spectrumContext.lineTo(spectrumCanvas.width, spectrumCanvas.height/2);
+      spectrumContext.stroke();
+  
+    }
+  }
 
 function log10(x) {
     return Math.log(x)/Math.LN10;

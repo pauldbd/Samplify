@@ -14,7 +14,7 @@
         </div>
         <div class="visualizeAudio">
             <canvas id="audioVizualization"></canvas>
-            <!-- <canvas id="audioVizualizationRange"></canvas> -->
+            <canvas id="rangeVizualization"></canvas>
         </div>
         <div class="sections" id="left-section">
             <div class="rows">
@@ -95,20 +95,39 @@
             <div class="knob">
                 <img src="./images/knob-modified (1).png" id="knob" draggable="false">
             </div>
-            <div id="copyButton" class="buttons">
-                <div class="buttonLabel">Copy</div>
+            <div class="buttonsRow1">
+                <div id="copyButton" class="buttons">
+                    <div class="buttonLabel">Copy</div>
+                </div>
+                <div id="pasteButton" class="buttons">
+                    <div class="buttonLabel">Paste</div>
+                </div>
+                <div id="muteButton" class="buttons">
+                    <div class="buttonLabel">Mute</div>
+                </div>
+                <div id="resetButton" class="buttons">
+                    <div class="buttonLabel">Reset</div>
+                </div>
+                <div id="replayButton" class="buttons">
+                    <div class="buttonLabel">Replay</div>
+                </div>
             </div>
-            <div id="pasteButton" class="buttons">
-                <div class="buttonLabel">Paste</div>
+            <div class="buttonsRow2">
+                <div id="recordButton" class="buttons">
+                    <div class="buttonLabel">Record</div>
+                </div>
+                <div id="eraseButton" class="buttons">
+                    <div class="buttonLabel">Erase</div>
+                </div>
+                <div id="startButton" class="buttons">
+                    <div class="buttonLabel">Start</div>
+                </div>
+                <div id="pauseButton" class="buttons">
+                    <div class="buttonLabel">Pause</div>
+                </div>
             </div>
-            <div id="muteButton" class="buttons">
-                <div class="buttonLabel">Mute</div>
-            </div>
-            <div id="resetButton" class="buttons">
-                <div class="buttonLabel">Reset</div>
-            </div>
-            <div id="replayButton" class="buttons">
-                <div class="buttonLabel">Replay</div>
+            <div class="visualizeSpectrum">
+                <canvas id="spectrumVizualization"></canvas>
             </div>
             </div>
             </div>

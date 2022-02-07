@@ -7,7 +7,7 @@ body {
 }
 
 .logo{
-    margin-top: 3vh; 
+    margin-top: 2vw; 
     text-align: center; 
     font-size: 2vw; 
 }
@@ -35,7 +35,7 @@ body {
     float: left;
     align-content: center;
     width: 50%;
-    margin-top: 3vh;
+    margin-top: 2vw;
     display: relative;
 }
 #left-section{
@@ -112,10 +112,21 @@ body {
 }
 
 #audioVizualization{
+    position: absolute;
     border: 2px solid; 
     border-radius: 2%;
     align-content: flex-start;
     width: 70%;
+}
+
+#rangeVizualization{
+    position: absolute;
+    border: 2px solid; 
+    border-radius: 2%;
+    align-content: flex-start;
+    width: 70%;
+    /* background-color: black; */
+
 }
 
 .visualizeAudio{
@@ -124,7 +135,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 2vh;
+    margin-top: 1.4vw;
+    height: 10vw;
 }
 
 /* The container must be positioned relative: */
@@ -188,11 +200,22 @@ body {
     transform: scale(0.9);
 }
 
-.buttonSections{
-    display: flex;
-    align-content: center;
-}
+
 
 #copyButton{
-    margin-left: 5.3vw;
+    margin-left: 5.1vw;
+}
+
+.buttonsRow2{
+    margin-left: 8vw;
+}
+
+
+#spectrumVizualization{
+    border: 2px solid rgb(92, 92, 91);
+    border-radius: 2%;
+    width: 80%;
+    height: 8vw;
+    margin-top: 4vw;
+    margin-left: 5vw;
 }
