@@ -13,15 +13,15 @@ body {
 }
 
 .key {
-    width: 8vw; 
-    height: 8vw; 
+    width: 7vw; 
+    height: 7vw; 
     display: inline-block; 
     position: relative; 
     margin-top: 0.1vw;
     margin-left: 0.1vw;
-    background-color:rgb(148, 148, 148);
+    background-color: rgb(156, 156, 156);
     border-radius: 5%;
-    box-shadow: 3px 3px rgb(182, 182, 182);
+    box-shadow: 3px 3px rgb(211, 211, 211);
     transition: ease-in-out all .1s;
 
 }
@@ -135,7 +135,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 1.4vw;
+    margin-top: 1vw;
     height: 10vw;
 }
 
@@ -202,12 +202,16 @@ body {
 
 
 
-#copyButton{
-    margin-left: 5.1vw;
+.buttonsRow1{
+    margin-left: 3vw;
 }
 
 .buttonsRow2{
-    margin-left: 8vw;
+    margin-left: 3vw;
+}
+
+#trackButton{
+    background-color: rgb(116, 116, 116);
 }
 
 
@@ -216,6 +220,6 @@ body {
     border-radius: 2%;
     width: 80%;
     height: 8vw;
-    margin-top: 4vw;
+    margin-top: 2vw;
     margin-left: 5vw;
 }

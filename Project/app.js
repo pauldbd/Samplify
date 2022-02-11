@@ -5,15 +5,19 @@ const primaryGainControl = audioContext.createGain();
 const visualCanvas = document.getElementById("audioVizualization");
 const rangeCanvas = document.getElementById("rangeVizualization");
 const spectrumCanvas = document.getElementById("spectrumVizualization"); 
+const dest = audioContext.createMediaStreamDestination();
+const rec = new Recorder(primaryGainControl); 
+
 primaryGainControl.connect(audioContext.destination); 
+primaryGainControl.connect(dest); 
 
 let heightRatio = 0.15;
 const dpr = window.devicePixelRatio || 1;
 const padding = 0;
 visualCanvas.width = visualCanvas.offsetWidth * dpr;
-visualCanvas.height = visualCanvas.width * 0.12; 
+visualCanvas.height = visualCanvas.width * 0.10; 
 rangeCanvas.width = rangeCanvas.offsetWidth * dpr;
-rangeCanvas.height = rangeCanvas.width * 0.12; 
+rangeCanvas.height = rangeCanvas.width * 0.10; 
 spectrumCanvas.width *= dpr; 
 spectrumCanvas.height *= dpr; 
 
@@ -39,6 +43,8 @@ let isReplay = [];
 let copiedPad = -1; 
 let recording = false; 
 let durations = []; 
+let isAudio = []; 
+let track = false; 
 
 const audios = []; 
 for (let i = 0; i < 16; i++){
@@ -55,6 +61,7 @@ for (let i = 0; i < 16; i++){
     isMuted[i] = false; 
     isReplay[i] = false; 
     durations[i] = 0; 
+    isAudio[i] = false; 
 }
 
 let pointerX = null, pointerY = null, knobValue = 0; 
@@ -74,6 +81,7 @@ record();
 mute(); 
 reset(); 
 replay(); 
+recordTrack(); 
 drawRangePoints(); 
 audioDetectPlay(); 
 
@@ -90,7 +98,7 @@ function playAudio(i){
     key.style.backgroundColor = "rgb(124, 123, 123)";
     if (audios[i].src != ""){
         let duration = audios[i].duration; 
-        if (isNaN(duration) || duration == Infinity){
+        if (isNaN(duration) || !isFinite(duration)){
             duration = durations[i]; 
         }
         audios[i].currentTime = (duration/samples * startValues[i]); 
@@ -98,6 +106,10 @@ function playAudio(i){
         playingPad = i; 
         let prev = audios[i].currentTime; 
         setInterval(() => {
+            let duration = audios[i].duration; 
+            if (isNaN(duration) || !isFinite(duration)){
+                duration = durations[i]; 
+            }
             if (audios[i].currentTime >= (duration/samples * endValues[i])){
                 audios[i].pause(audioContext.currentTime);
                 if (isReplay[i]){
@@ -234,22 +246,21 @@ function updateCurrentAudio(){
             }
         }); 
         file.addEventListener("input", function(){
-            outline(currentPad, i-1); 
-            currentPad = i-1; 
-            endValues[i-1] = samples-1; 
-            startValues[i-1] = 0; 
-            currentData1 = []; 
-            currentData2 = []; 
-            isReplay[i] = false; 
-            isMuted[i] = false; 
-            updateAudioName(i-1); 
-            muteColor(); 
-            replayColor(); 
             if (!fileIsEmpty(i-1)){
+                outline(currentPad, i-1); 
+                currentPad = i-1; 
+                endValues[i-1] = samples-1; 
+                startValues[i-1] = 0; 
+                currentData1 = []; 
+                currentData2 = []; 
+                isReplay[i] = false; 
+                isMuted[i] = false; 
+                updateAudioName(i-1); 
+                muteColor(); 
+                replayColor(); 
                 audios[i-1].src = URL.createObjectURL(file.files[0])
                 visualizeAudio(i-1); 
             }
-            else clearCanvas(); 
         })
         
     }
@@ -272,9 +283,13 @@ function outline(oldPad, pad){
 }
 
 function updateAudioName(pad){
+    
     const audioLabel = document.getElementById("audioLabel"); 
     const file = document.getElementById("file-input"+(pad+1)); 
-    if (fileIsEmpty(pad)){
+    if (isAudio[pad] == true){
+        audioLabel.innerHTML = "Pad " + (pad+1) + ": Audio " + (pad+1); 
+    }
+    else if (fileIsEmpty(pad)){
         audioLabel.innerHTML = "Pad " + (pad+1) + ": Untitled - Click On a Pad To Add a File"; 
     }
     else{
@@ -440,14 +455,12 @@ function updateCopyAndPaste(){
     const pasteButton = document.getElementById("pasteButton"); 
     
     copyButton.addEventListener("click", function (event){
-        copiedPad = currentPad; 
-        console.log(copiedPad); 
+        copiedPad = currentPad;  
     })
 
     pasteButton.addEventListener("click", function (event){
         const file = document.getElementById("file-input"+(currentPad+1)); 
-        file.files = document.getElementById("file-input"+(copiedPad+1)).files; 
-        audios[currentPad].src = URL.createObjectURL(file.files[0]); 
+        audios[currentPad].src = audios[copiedPad].src; 
         updateAudioName(currentPad);
         visualizeAudio(currentPad); 
     })
@@ -527,52 +540,87 @@ function reset(){
 function record(){
     const recordButton = document.getElementById("recordButton"); 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        console.log('getUserMedia supported.');
         navigator.mediaDevices.getUserMedia (
-           // constraints - only audio needed for this app
            {
               audio: true
            })
      
            // Success callback
            .then(function(stream) {
-               recordEvents(stream); 
+               recordAudio(stream); 
            })
      
            // Error callback
            .catch(function(err) {
-              console.log('The following getUserMedia error occurred: ' + err);
            }
         );
      } else {
-        console.log('getUserMedia not supported on your browser!');
      }
 
 }
 
-function recordEvents(stream){
+function toURL(blob) {
+    let url = URL.createObjectURL(blob); 
+    audios[currentPad].src = url;
+}
+
+function recordAudio(stream){
     visualize(stream); 
     const mediaRecorder = new MediaRecorder(stream);
+
     const recordButton = document.getElementById("recordButton");
     const eraseButton = document.getElementById("eraseButton");
     let chunks = [];
     let t0; 
+    recordLabel = document.getElementById("recordLabel"); 
     recordButton.addEventListener("click", function (event){
-        if (!recording){
-            t0 = performance.now(); 
-            recording = true;
-            mediaRecorder.start();
-            console.log(mediaRecorder.state);
-            console.log("recorder started");
-            recordButton.style.background = "rgb(92, 92, 91)";
-            // recordButton.style.color = "black";
+        if (!track){
+            if (!recording){
+                t0 = performance.now(); 
+                recording = true;
+                mediaRecorder.start();
+                recordButton.style.background = "rgb(92, 92, 91)";
+                recordLabel.innerHTML = "Pause"; 
+                // recordButton.style.color = "black";
+            }
+            else{
+                recording = false; 
+                t1 = performance.now(); 
+                mediaRecorder.stop();
+                recordButton.style.background = "rgb(182, 182, 182)"; 
+                durations[currentPad] = t1 - t0;  
+                recordLabel.innerHTML = "Record"; 
+            }
         }
         else{
-            recording = false; 
-            t1 = performance.now(); 
-            mediaRecorder.stop(); 
-            recordButton.style.background = "rgb(182, 182, 182)"; 
-            durations[currentPad] = t1 - t0;  
+            if (!recording){
+                recording = true; 
+                t0 = performance.now(); 
+                recordButton.style.background = "rgb(92, 92, 91)";
+                recordLabel.innerHTML = "Pause"; 
+                rec.record(); 
+            }
+            else{
+                recordButton.style.background = "rgb(182, 182, 182)"; 
+                t1 = performance.now();
+                durations[currentPad] = t1 - t0;  
+                recordLabel.innerHTML = "Record"; 
+                recording = false; 
+                rec.stop(); 
+                rec.exportWAV(toURL); 
+                rec.clear(); 
+                endValues[currentPad] = samples-1;
+                startValues[currentPad] = 0; 
+                currentData1 = []; 
+                currentData2 = []; 
+                isReplay[currentPad] = false; 
+                isMuted[currentPad] = false; 
+                isAudio[currentPad] = true; 
+                updateAudioName(currentPad); 
+                muteColor(); 
+                replayColor();
+                visualizeAudio(currentPad); 
+            }
         }
 
     })
@@ -582,13 +630,13 @@ function recordEvents(stream){
         const url = URL.createObjectURL(blob); 
         chunks = []; 
         audios[currentPad].src = url;
-        console.log(audios[currentPad].duration); 
-        endValues[currentPad] = samples-1; 
+        endValues[currentPad] = samples-1;
         startValues[currentPad] = 0; 
         currentData1 = []; 
         currentData2 = []; 
         isReplay[currentPad] = false; 
         isMuted[currentPad] = false; 
+        isAudio[currentPad] = true; 
         updateAudioName(currentPad); 
         muteColor(); 
         replayColor();
@@ -635,7 +683,7 @@ function visualize(stream) {
       source.connect(analyser); 
       primaryGainControl.connect(analyser); 
 
-      if (recording){
+      if (!track){
         primaryGainControl.disconnect(analyser); 
       }
       else{
@@ -679,4 +727,24 @@ function visualize(stream) {
 
 function log10(x) {
     return Math.log(x)/Math.LN10;
+}
+
+function recordTrack(){
+    const trackButton = document.getElementById("trackButton"); 
+    const trackLabel = document.getElementById("trackLabel"); 
+    trackButton.addEventListener("click", function (event){
+        track = !track; 
+        if (track){
+            trackLabel.innerHTML = "Track"; 
+            trackButton.style.backgroundColor = "rgb(189, 177, 160)"; 
+        }
+        else{
+            trackLabel.innerHTML = "Audio"; 
+            trackButton.style.background = "rgb(116, 116, 116)";
+        }
+    })
+
+
+
+
 }
