@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <title>Sampler</title>
+    <title>Samplify</title>
     <link rel="icon" href="data:;base64,=">
+    <link rel="shortcut icon" href="images/vinyl.png">
 
 </head>
 <body>
-    <!-- <div class="logo">- S A M P L E R -</div> -->
+    <div class="logo" style="margin-top:1vw">
+        <img src="./images/vinyl.png" id="record" style="display: relative; width: 2.5%; margin-left: 2vw; height: 2.5%; margin-top: auto; margin-bottom: auto;">
+        <h4 class="logo-text">S A M P L I F Y - Joy of Sampling</h4>
+    </div>
     <div class="screen">
         <div class="audioName">
-            <label id="audioLabel">- Right Click To Select Pad  -</label>
+            <label id="audioLabel">- Hover Over Things To See What They Do! -</label>
         </div>
         <div class="visualizeAudio">
             <canvas id="audioVizualization"></canvas>
             <canvas id="rangeVizualization"></canvas>
         </div>
-        <div class="sections" id="left-section">
+        <div class="sections" id="left-section" title="Click on a pad to input a file and right click to select a pad, and play it by typing!">
             <div class="rows">
                 <div class="key" id="pad-1">
                     <label class="label" id='label-1'>A</label>
@@ -91,41 +98,47 @@
             </div>
         </div>
         <div class="sections">
-            <div class="effectsSelect" id="effectsLabel">Master Gain: 0.0 dB</div>
+            <div class="effectsSelect" id="effectsLabel" title="Use arrow keys to control the effects">Master Gain: 0.0 dB</div>
             <div class="knob">
-                <img src="./images/knob-modified (1).png" id="knob" draggable="false">
+                <div id="backButton" class="buttons" title="Previous Effect">
+                    <div class="buttonLabel">Back</div>
+                </div>
+                <img src="./images/knob-modified (1).png" id="knob" draggable="false" title="Drag the knob">
+                <div id="nextButton" class="buttons" title="Next Effect">
+                    <div class="buttonLabel">Next</div>
+                </div>
             </div>
             <div class="buttonsRow1">
-                <div id="copyButton" class="buttons">
+                <div id="copyButton" class="buttons" title="Copies the content of the current pad">
                     <div class="buttonLabel">Copy</div>
                 </div>
-                <div id="pasteButton" class="buttons">
+                <div id="pasteButton" class="buttons" title="Pastes the content of the copied pad to the current pad">
                     <div class="buttonLabel">Paste</div>
                 </div>
-                <div id="muteButton" class="buttons">
+                <div id="muteButton" class="buttons" title="Mutes the current pad">
                     <div class="buttonLabel">Mute</div>
                 </div>
-                <div id="resetButton" class="buttons">
+                <div id="resetButton" class="buttons" title="Resets all the settings">
                     <div class="buttonLabel">Reset</div>
                 </div>
-                <div id="replayButton" class="buttons">
+                <div id="replayButton" class="buttons" title="Turn replay on/off">
                     <div class="buttonLabel">Replay</div>
                 </div>
             </div>
             <div class="buttonsRow2">
-                <div id="trackButton" class="buttons">
+                <div id="trackButton" class="buttons" title="Audio - Records audio, Track - Records the pad outputs, Click to switch between">
                     <div class="buttonLabel" id="trackLabel">Audio</div>
                 </div>
-                <div id="recordButton" class="buttons">
+                <div id="recordButton" class="buttons" title="Starts recording based on the audio setting selected (Audio/Track Button)">
                     <div class="buttonLabel" id="recordLabel">Record</div>
                 </div>
-                <div id="eraseButton" class="buttons">
+                <div id="eraseButton" class="buttons" title="Erases the audio on the pad">
                     <div class="buttonLabel">Erase</div>
                 </div>
-                <div id="startButton" class="buttons">
+                <div id="startButton" class="buttons" title="Starts the audio on the pad">
                     <div class="buttonLabel">Start</div>
                 </div>
-                <div id="pauseButton" class="buttons">
+                <div id="pauseButton" class="buttons" title="Pauses the audio on the pad">
                     <div class="buttonLabel">Pause</div>
                 </div>
             </div>

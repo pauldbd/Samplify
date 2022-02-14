@@ -1,28 +1,38 @@
 body {
-    font-family:"Gill Sans", sans-serif;
-    background-color:rgb(228, 220, 208); 
-    color: rgb(92, 92, 91);
+    font-family: 'Roboto', sans-serif;
+
+    background-color: rgb(255, 246, 230);
+    color: rgb(173, 169, 169);
     letter-spacing: 4px;
     margin:0; 
+    height: 100%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
 .logo{
-    margin-top: 2vw; 
-    text-align: center; 
-    font-size: 2vw; 
+    margin-top: 1vw; 
+    font-size: 0.8vw; 
+    text-shadow: 2px 2px 2px rgb(255, 188, 101);
+    display: flex; 
+}
+
+.logo-text{
+    margin-left: 2vw;
 }
 
 .key {
-    width: 7.6vw; 
-    height: 7.6vw; 
+    width: 6.8vw; 
+    height: 6.8vw; 
     display: inline-block; 
     position: relative; 
-    margin-top: 0.1vw;
-    margin-left: 0.1vw;
-    background-color: rgb(156, 156, 156);
+    margin-top: 1%;
+    margin-left: 1%;
+    background-color: rgb(233, 210, 181);
     border-radius: 5%;
-    box-shadow: 3px 3px rgb(211, 211, 211);
+    box-shadow: 1px 1px 3px rgb(184, 168, 168);
     transition: ease-in-out all .1s;
+    opacity: 0.66;
 
 }
 
@@ -35,7 +45,6 @@ body {
     float: left;
     align-content: center;
     width: 50%;
-    margin-top: 2vw;
     display: relative;
 }
 #left-section{
@@ -86,7 +95,7 @@ body {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: rgb(207, 205, 205);
+    color: rgb(102, 102, 102); 
     opacity: 1;
 }
 
@@ -104,27 +113,29 @@ body {
 
 .audioName {
     position: relative; 
-    margin-top: 2vw; 
-    font-size: 1.7vw;
+    margin-top: 1vw; 
+    font-size: 1.2vw;
     /* margin-left:20%;  */
     text-align: center;
+    color: rgb(102, 102, 102); 
     /* background-color: white; */
 }
 
 #audioVizualization{
     position: absolute;
-    border: 2px solid; 
     border-radius: 2%;
+    background-color: rgba(245, 227, 201, 0.753);
     align-content: flex-start;
-    width: 70%;
+    width: 84%;
+    box-shadow: 1px 1px 3px rgb(226, 219, 207);
 }
 
 #rangeVizualization{
     position: absolute;
-    border: 2px solid; 
     border-radius: 2%;
     align-content: flex-start;
-    width: 70%;
+    width: 84%;
+
     /* background-color: black; */
 
 }
@@ -141,29 +152,22 @@ body {
 
 /* The container must be positioned relative: */
 .effectsSelect{
-    border: 2px solid; 
-    border-color: rgba(92, 92, 91, 0.767);
+    /* border: 2px solid; 
+    border-color: rgba(92, 92, 91, 0.767); */
     width: 50%;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
     /* height: 1.5vw; */
     font-size: 1.2vw;
+    color: rgb(117, 117, 117);
+    transition: ease-in-out all .5s;
 }
 
 .knob{
-    margin-top: 2vw;
+    margin-top: 1.7vw;
     justify-content: center;
     display: flex;
-}
-
-#knob{
-    width: 8vw;
-    margin-left: auto;
-    margin-right: auto;
-    align-content: center;
-    justify-content: center;
-    /* background-color: rgba(161, 153, 142, 0.548); */
 }
 
 .buttons{
@@ -173,9 +177,9 @@ body {
 }
 
 .buttons{
-    background-color:rgb(182, 182, 182);  
-    box-shadow: 3px 3px rgb(148, 148, 148);  
-    height: 2vw;
+    background-color: rgba(247, 209, 169, 0.616); 
+    box-shadow: 3px 3px 1px rgb(255, 239, 227);
+    height: 1.5vw;
     width: 6vw;
     text-align: center;
     border-radius: 5%;
@@ -184,9 +188,9 @@ body {
 }
 
 .buttonLabel{
-    color: rgb(240, 240, 240);
-    margin-top: 2%; 
-    font-size: 1.1vw;
+    color: rgb(131, 131, 131);
+    margin-top: 3%; 
+    font-size: .8vw;
     user-select: none;
 }
 
@@ -210,16 +214,29 @@ body {
     margin-left: 3vw;
 }
 
-#trackButton{
-    background-color: rgb(116, 116, 116);
+#backButton{
+    margin-left: 0vw;
+}
+#nextButton{
+    margin-left: 4vw;
 }
 
+#knob{
+    width: 8vw;
+    margin-left: 4vw;
+    /* margin-right: 3vw; */
+    align-content: center;
+    justify-content: center;
+    /* background-color: rgba(161, 153, 142, 0.548); */
+}
 
 #spectrumVizualization{
-    border: 2px solid rgb(92, 92, 91);
+    /* border: 2px solid rgb(92, 92, 91); */
     border-radius: 2%;
     width: 80%;
     height: 8vw;
-    margin-top: 2vw;
+    margin-top: 3vw;
     margin-left: 5vw;
+    background-color: rgba(245, 227, 201, 0.753);
+    box-shadow: 1px 1px 3px rgb(226, 219, 207);
 }

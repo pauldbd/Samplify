@@ -11,13 +11,13 @@ const rec = new Recorder(primaryGainControl);
 primaryGainControl.connect(audioContext.destination); 
 primaryGainControl.connect(dest); 
 
-let heightRatio = 0.15;
+let heightRatio = 0.08;
 const dpr = window.devicePixelRatio || 1;
 const padding = 0;
 visualCanvas.width = visualCanvas.offsetWidth * dpr;
-visualCanvas.height = visualCanvas.width * 0.10; 
+visualCanvas.height = visualCanvas.width * heightRatio; 
 rangeCanvas.width = rangeCanvas.offsetWidth * dpr;
-rangeCanvas.height = rangeCanvas.width * 0.10; 
+rangeCanvas.height = rangeCanvas.width * heightRatio; 
 spectrumCanvas.width *= dpr; 
 spectrumCanvas.height *= dpr; 
 
@@ -83,7 +83,10 @@ reset();
 replay(); 
 recordTrack(); 
 drawRangePoints(); 
-audioDetectPlay(); 
+StartAndPause(); 
+effectEvent(); 
+keyDownEvents(); 
+rotateRecord(); 
 
 function setUpHtml(){
     const keys = "qwertyuiasdfghjk";
@@ -93,18 +96,19 @@ function setUpHtml(){
     }
 }
 
-function playAudio(i){
+function playAudio(i, start){
     const key = document.getElementById("pad-"+(i+1)); 
-    key.style.backgroundColor = "rgb(124, 123, 123)";
+    key.style.backgroundColor = "#e39852";
     if (audios[i].src != ""){
         let duration = audios[i].duration; 
         if (isNaN(duration) || !isFinite(duration)){
             duration = durations[i]; 
         }
+        if (!start)
         audios[i].currentTime = (duration/samples * startValues[i]); 
         audios[i].play();
         playingPad = i; 
-        let prev = audios[i].currentTime; 
+        let prev = audios[i].currentTime;
         setInterval(() => {
             let duration = audios[i].duration; 
             if (isNaN(duration) || !isFinite(duration)){
@@ -123,14 +127,16 @@ function playAudio(i){
     }
 }
 
-async function audioDetectPlay(){
+
+
+async function keyDownEvents(){
     window.addEventListener("keydown", async (event) => {
 
         const keys = "qwertyuiasdfghjk";
 
         for (let i = 0; i < 16; i++){
             if (keys[i] == event.key){
-                playAudio(i); 
+                playAudio(i, false); 
             }
         }
 
@@ -147,7 +153,7 @@ async function audioDetectPlay(){
             if (keys[i] == event.key){
                 const key = document.getElementById("pad-"+(i+1));
                 setTimeout(function() {
-                    key.style.backgroundColor = "rgb(148, 148, 148)"; 
+                    key.style.backgroundColor = "rgb(233, 210, 181)"; 
                   }, 160); 
             }
         }
@@ -155,25 +161,42 @@ async function audioDetectPlay(){
 
     })
 
+}
+
+function effectEvent(){
+    const next = document.getElementById("nextButton"); 
+    const back = document.getElementById("backButton"); 
+    next.onclick = function(){
+        currentEffect += 1; 
+        updateEffectLabel(0); 
+    }
+    back.onclick = function(){
+        currentEffect -= 1; 
+        updateEffectLabel(0); 
+    }
+
+}
+
+function StartAndPause(){
     const startButton = document.getElementById("startButton"); 
     const pauseButton = document.getElementById("pauseButton"); 
 
     startButton.addEventListener("click", function(event){
-        playAudio(currentPad); 
+        playAudio(currentPad, true); 
     }); 
 
     pauseButton.addEventListener("click", function (event){
         try{
             audios[currentPad].pause(); 
+            
         }
         catch(error){
             
         }
     })
-
-
-
 }
+
+
 
 function updateEffectLabel(e){
     if (e.keyCode == '37') {
@@ -332,7 +355,7 @@ async function getData(pad, ChannelData){
 }
 
 function clearCanvas(){
-    visualContext.fillStyle = "rgb(92, 92, 91)"; 
+    visualContext.fillStyle = "#808080"; 
     visualContext.clearRect(0, -visualCanvas.height, visualCanvas.width, 2 * visualCanvas.height);
     visualContext.fillRect(0, 0, visualCanvas.width, dpr); 
 }
@@ -417,6 +440,8 @@ function drawRangePoints(){
     const WIDTH = rangeCanvas.width
     const HEIGHT = rangeCanvas.height;
     requestAnimationFrame(drawRangePoints)
+
+    rangeContext.fillStyle = 'rgb(20, 20, 20)'; 
     
     rangeContext.clearRect(0, -HEIGHT, WIDTH, 2*HEIGHT); 
     rangeContext.fillRect(startValues[currentPad], -visualCanvas.height, 2, 2*visualCanvas.height)
@@ -472,20 +497,20 @@ function updateCopyAndPaste(){
 function muteColor(){
     const muteButton = document.getElementById("muteButton"); 
     if (isMuted[currentPad]){
-        muteButton.style.backgroundColor = "rgb(92, 92, 91)"; 
+        muteButton.style.backgroundColor = "rgb(192, 192, 191)"; 
     }
     else{
-        muteButton.style.backgroundColor = "rgb(182, 182, 182)"; 
+        muteButton.style.backgroundColor = "rgba(247, 209, 169, 0.616)"; 
     }
 }
 
 function replayColor(){
     const replayButton = document.getElementById("replayButton"); 
     if (isReplay[currentPad]){
-        replayButton.style.backgroundColor = "rgb(92, 92, 91)"; 
+        replayButton.style.backgroundColor = "rgb(192, 192, 191)"; 
     }
     else{
-        replayButton.style.backgroundColor = "rgb(182, 182, 182)"; 
+        replayButton.style.backgroundColor = "rgba(247, 209, 169, 0.616)"; 
     }
 }
 
@@ -579,7 +604,7 @@ function recordAudio(stream){
                 t0 = performance.now(); 
                 recording = true;
                 mediaRecorder.start();
-                recordButton.style.background = "rgb(92, 92, 91)";
+                recordButton.style.background = "rgb(192, 192, 191)";
                 recordLabel.innerHTML = "Pause"; 
                 // recordButton.style.color = "black";
             }
@@ -587,7 +612,7 @@ function recordAudio(stream){
                 recording = false; 
                 t1 = performance.now(); 
                 mediaRecorder.stop();
-                recordButton.style.background = "rgb(182, 182, 182)"; 
+                recordButton.style.background = "rgba(247, 209, 169, 0.616)"; 
                 durations[currentPad] = t1 - t0;  
                 recordLabel.innerHTML = "Record"; 
             }
@@ -596,12 +621,12 @@ function recordAudio(stream){
             if (!recording){
                 recording = true; 
                 t0 = performance.now(); 
-                recordButton.style.background = "rgb(92, 92, 91)";
+                recordButton.style.background = "rgb(192, 192, 191)";
                 recordLabel.innerHTML = "Pause"; 
                 rec.record(); 
             }
             else{
-                recordButton.style.background = "rgb(182, 182, 182)"; 
+                recordButton.style.background = "rgba(247, 209, 169, 0.616)"; 
                 t1 = performance.now();
                 durations[currentPad] = t1 - t0;  
                 recordLabel.innerHTML = "Record"; 
@@ -693,11 +718,11 @@ function visualize(stream) {
 
       analyser.getByteTimeDomainData(dataArray);
   
-      spectrumContext.fillStyle = 'rgb(228, 220, 208)';
+      spectrumContext.fillStyle = 'rgba(245, 227, 201, 0.753)';
       spectrumContext.fillRect(0, 0, WIDTH, HEIGHT);
   
       spectrumContext.lineWidth = 2;
-      spectrumContext.strokeStyle = 'rgb(0, 0, 0)';
+      spectrumContext.strokeStyle = '#808080';
   
       spectrumContext.beginPath();
   
@@ -736,15 +761,25 @@ function recordTrack(){
         track = !track; 
         if (track){
             trackLabel.innerHTML = "Track"; 
-            trackButton.style.backgroundColor = "rgb(189, 177, 160)"; 
+            trackLabel.style.color = "rgb(131, 131, 131)"; 
+            // trackButton.style.backgroundColor = "rgb(209, 197, 180)"; 
         }
         else{
             trackLabel.innerHTML = "Audio"; 
-            trackButton.style.background = "rgb(116, 116, 116)";
+            trackLabel.style.color = "rgb(131, 131, 131)"; 
         }
     })
 
 
 
 
+}
+
+function rotateRecord(){
+    let prev = 0; 
+    const record = document.getElementById("record"); 
+    setInterval(function(){
+        record.style.transform = "rotate(" + prev + "deg)"; 
+        prev += 1; 
+    },8)
 }
