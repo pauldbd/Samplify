@@ -19,6 +19,8 @@ body {
 
 .logo-text{
     margin-left: 2vw;
+    margin-top: auto; 
+    margin-bottom: auto;
 }
 
 .key {
