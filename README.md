@@ -47,4 +47,8 @@
 
 - Clicking on the Start button will start the audio of the selected pad
 
+<<<<<<< HEAD
 - Clicking on the Pause button will pause the audio of the selected pad
+=======
+- Clicking on the Pause button will pause the audio of the selected pad
+>>>>>>> 1cbbf88f9f735716b8a6f18f5978cbb883f0258c
