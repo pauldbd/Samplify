@@ -45,6 +45,7 @@ let recording = false;
 let durations = []; 
 let isAudio = []; 
 let track = false; 
+let initialAudios = ["./audios/808ThudKick_01_SP.wav"]
 
 const audios = []; 
 for (let i = 0; i < 16; i++){
@@ -62,6 +63,7 @@ for (let i = 0; i < 16; i++){
     isReplay[i] = false; 
     durations[i] = 0; 
     isAudio[i] = false; 
+    audios[i].src = initialAudios[i]; 
 }
 
 let pointerX = null, pointerY = null, knobValue = 0; 
